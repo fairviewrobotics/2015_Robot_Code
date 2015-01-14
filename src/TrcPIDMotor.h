@@ -33,7 +33,7 @@
  * The PIDMotor object consists of a motor speed controller, a PID controller
  * object and a PIDInput object to provide feedback.
  */
-class TrcPIDMotor: public CoopTask
+class TrcPIDMotor
 {
 private:
     //
@@ -47,16 +47,16 @@ private:
 
     SpeedController *m_motor1;
     SpeedController *m_motor2;
-    UINT8            m_syncGroup;
+    uint8_t          m_syncGroup;
     TrcPIDCtrl      *m_pidCtrl;
     PIDInput        *m_pidInput;
-    uint32_t           m_pidMotorOptions;
-    uint32_t           m_pidMotorFlags;
+    uint32_t         m_pidMotorOptions;
+    uint32_t         m_pidMotorFlags;
     Event           *m_notifyEvent;
     float            m_motorPower;
-    uint32_t           m_expiredTime;
+    uint32_t         m_expiredTime;
     float            m_prevInput;
-    uint32_t           m_prevTime;
+    uint32_t         m_prevTime;
     float            m_calPower;
     float            m_zeroPosition;
 
@@ -71,9 +71,6 @@ public:
         bool fStopMotors = true
         )
     {
-        TLevel(API);
-        TEnter();
-
         if (fStopMotors)
         {
             if (m_motor1 != NULL)
@@ -101,7 +98,6 @@ public:
         m_prevTime = 0;
         m_calPower = 0.0;
 
-        TExit();
         return;
     }   //Reset
 
@@ -115,12 +111,8 @@ public:
         uint32_t mode
         )
     {
-        TLevel(CALLBK);
-        TEnterMsg(("mode=%d", mode));
-
         Reset(true);
 
-        TExit();
         return;
     }   //TaskStopMode
 
@@ -153,15 +145,7 @@ public:
          , m_prevTime(0)
          , m_calPower(0.0)
          , m_zeroPosition(0.0)
-    {
-        TLevel(INIT);
-        TEnterMsg(("motor=%p,pidCtrl=%p,pidInput=%p,options=%x",
-                   motor, pidCtrl, pidInput, pidMotorOptions));
-
-        RegisterTask(MOD_NAME, TASK_STOP_MODE | TASK_POST_PERIODIC);
-
-        TExit();
-    }   //TrcPIDMotor
+    {}   //TrcPIDMotor
 
     /**
      * Constructor: Create an instance of the TrcPIDMotor object that consists
@@ -178,7 +162,7 @@ public:
     TrcPIDMotor(
         SpeedController *motor1,
         SpeedController *motor2,
-        UINT8            syncGroup,
+        uint8_t          syncGroup,
         TrcPIDCtrl      *pidCtrl,
         PIDInput        *pidInput,
         uint32_t           pidMotorOptions = 0
@@ -196,16 +180,7 @@ public:
          , m_prevTime(0)
          , m_calPower(0.0)
          , m_zeroPosition(0.0)
-    {
-        TLevel(INIT);
-        TEnterMsg(("motor1=%p,motor2=%p,syncGrp=%d,pidCtrl=%p,pidInput=%p,options=%x",
-                   motor1, motor2, syncGroup, pidCtrl, pidInput,
-                   pidMotorOptions));
-
-        RegisterTask(MOD_NAME, TASK_STOP_MODE | TASK_POST_PERIODIC);
-
-        TExit();
-    }   //TrcPIDMotor
+    {}   //TrcPIDMotor
 
     /**
      * Destructor: Destroy an instance of the TrcPIDMotor object.
@@ -215,13 +190,7 @@ public:
         void
         )
     {
-        TLevel(INIT);
-        TEnter();
-
         Reset(true);
-        UnregisterTask();
-
-        TExit();
     }   //~TrcPIDMotor
 
     /**
@@ -247,11 +216,6 @@ public:
         uint32_t resetTimeout = 0
         )
     {
-        TLevel(API);
-        TEnterMsg(("power=%f,lowBound=%f,upBound=%f,stallMinPower=%f,stallTimeout=%d,resetTimeout=%d",
-                   power, lowerBound, upperBound, stallMinPower, stallTimeout,
-                   resetTimeout));
-
         if (m_pidMotorFlags & PIDMOTORF_PIDMODE_ON)
         {
             //
@@ -327,7 +291,6 @@ public:
             }
         }
 
-        TExit()
         return;
     }   //SetPower
 
@@ -341,12 +304,8 @@ public:
         float calPower
         )
     {
-        TLevel(API);
-        TEnterMsg(("calPower=%f", calPower));
-
         m_calPower = calPower;
 
-        TExit();
         return;
     }   //ZeroCalibrate
 
@@ -367,10 +326,6 @@ public:
         uint32_t timeout = 0
         )
     {
-        TLevel(API);
-        TEnterMsg(("setPoint=%f,fHoldTarget=%x,event=%p,timeout=%d",
-                   setPoint, fHoldTarget, notifyEvent, timeout));
-
         if (m_pidMotorFlags & PIDMOTORF_PIDMODE_ON)
         {
             //
@@ -388,7 +343,6 @@ public:
             m_pidMotorFlags |= PIDMOTORF_HOLD_TARGET;
         }
 
-        TExit();
         return;
     }   //SetTarget
 
@@ -403,18 +357,15 @@ public:
         uint32_t mode
         )
     {
-        TLevel(TASK);
-        TEnterMsg(("mode=%d", mode));
-
         if ((m_motor1 != NULL) && (m_calPower != 0.0))
         {
             //
             // We are in zero calibration mode.
             //
-            if ((m_calPower < 0.0) &&
-                ((CANJaguar *)m_motor1)->GetReverseLimitOK() ||
-                (m_calPower > 0.0) &&
-                ((CANJaguar *)m_motor1)->GetForwardLimitOK())
+            if (((m_calPower < 0.0) &&
+                ((CANJaguar *)m_motor1)->GetReverseLimitOK()) ||
+                ((m_calPower > 0.0) &&
+                ((CANJaguar *)m_motor1)->GetForwardLimitOK()))
             {
                 m_motor1->Set(m_calPower);
                 if (m_motor2 != NULL)
@@ -440,9 +391,9 @@ public:
         }
         else if (m_pidMotorFlags & PIDMOTORF_PIDMODE_ON)
         {
-            if (!(m_pidMotorFlags & PIDMOTORF_HOLD_TARGET) &&
-                m_pidCtrl->OnTarget() ||
-                (m_expiredTime != 0) && (GetMsecTime() >= m_expiredTime))
+            if ((!(m_pidMotorFlags & PIDMOTORF_HOLD_TARGET) &&
+                m_pidCtrl->OnTarget()) ||
+                ((m_expiredTime != 0) && (GetMsecTime() >= m_expiredTime)))
             {
                 Reset(true);
                 if (m_notifyEvent != NULL)
@@ -464,11 +415,9 @@ public:
                     m_motor2->Set(m_motorPower);
                     ((CANJaguar*)m_motor2)->UpdateSyncGroup(m_syncGroup);
                 }
-                TSampling(("MotorOutput: %f", m_motorPower));
             }
         }
 
-        TExit();
         return;
     }   //TaskPostPeriodic
 

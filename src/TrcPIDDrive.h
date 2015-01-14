@@ -36,7 +36,7 @@
  * for X, one for Y and one for rotation) and a PID input object to provide
  * feedback.
  */
-class TrcPIDDrive: public CoopTask
+class TrcPIDDrive
 {
 private:
     //
@@ -68,9 +68,6 @@ public:
         void
         )
     {
-        TLevel(API);
-        TEnter();
-
         m_drive->StopMotor();
 
         if (m_pidCtrlXDrive != NULL)
@@ -90,7 +87,6 @@ public:
 
         m_pidDriveFlags = 0;
 
-        TExit();
         return;
     }   //Stop
 
@@ -104,12 +100,8 @@ public:
         uint32_t mode
         )
     {
-        TLevel(CALLBK);
-        TEnterMsg(("mode=%d", mode));
-
         Stop();
 
-        TExit();
         return;
     }   //TaskStopMode
 
@@ -142,16 +134,7 @@ public:
          , m_expiredTime(0)
          , m_xPower(0.0)
          , m_yPower(0.0)
-    {
-        TLevel(INIT);
-        TEnterMsg(("drive=%p,pidCtrlXDrive=%p,pidCtrlYDrive=%p,pidCtrlTurn=%p,"
-                   "pidInput=%p",
-                   drive, pidCtrlXDrive, pidCtrlYDrive, pidCtrlTurn, pidInput));
-
-        RegisterTask(MOD_NAME, TASK_STOP_MODE | TASK_POST_PERIODIC);
-
-        TExit();
-    }   //TrcPIDDrive
+    {}   //TrcPIDDrive
 
     /**
      * Destructor: Destroy an instance of the TrcPIDDrive object.
@@ -161,13 +144,7 @@ public:
         void
         )
     {
-        TLevel(INIT);
-        TEnter();
-
         Stop();
-        UnregisterTask();
-
-        TExit();
     }   //~TrcPIDDrive
 
     /**
@@ -195,12 +172,6 @@ public:
         uint32_t timeout = 0
         )
     {
-        TLevel(API);
-        TEnterMsg(("distXSetPt=%f,distYSetPt=%f,angleSetPt=%f,fHoldTarget=%x,"
-                   "event=%p,timeout=%d",
-                   distXSetPoint, distYSetPoint, angleSetPoint, fHoldTarget,
-                   notifyEvent, timeout));
-
         if (m_pidCtrlXDrive != NULL)
         {
             m_pidCtrlXDrive->SetTarget(distXSetPoint,
@@ -232,7 +203,6 @@ public:
             m_pidDriveFlags |= PIDDRIVEF_TURN_ONLY;
         }
 
-        TExit();
         return;
     }   //SetTarget
 
@@ -254,10 +224,6 @@ public:
         float angleSetPoint
         )
     {
-        TLevel(API);
-        TEnterMsg(("xPower=%f,yPower=%f,angleSetPt=%f",
-                   xPower, yPower, angleSetPoint));
-
         if (m_pidCtrlXDrive != NULL)
         {
             m_xPower = xPower;
@@ -271,7 +237,6 @@ public:
                               PIDDRIVEF_MANUAL_DRIVE;
         }
 
-        TExit();
         return;
     }   //SetAngleTarget
 
@@ -284,9 +249,6 @@ public:
         void
         )
     {
-        TLevel(API);
-        TEnter();
-
         if (m_pidDriveFlags & PIDDRIVEF_PIDDRIVE_ON)
         {
             Stop();
@@ -297,7 +259,6 @@ public:
             }
         }
 
-        TExit();
         return;
     }   //Abort
 
@@ -312,9 +273,6 @@ public:
         uint32_t mode
         )
     {
-        TLevel(TASK);
-        TEnterMsg(("mode=%d", mode));
-
         if (m_pidDriveFlags & PIDDRIVEF_PIDDRIVE_ON)
         {
             float xPower = ((m_pidDriveFlags & PIDDRIVEF_TURN_ONLY) ||
@@ -349,7 +307,7 @@ public:
             else if (expired ||
                      (turnOnTarget &&
                       ((m_pidDriveFlags & PIDDRIVEF_TURN_ONLY) ||
-                       xOnTarget && yOnTarget)))
+                       (xOnTarget && yOnTarget))))
             {
                 if (!(m_pidDriveFlags & PIDDRIVEF_HOLD_TARGET))
                 {
@@ -380,7 +338,6 @@ public:
             }
         }
 
-        TExit();
         return;
     }   //TaskPostPeriodic
 

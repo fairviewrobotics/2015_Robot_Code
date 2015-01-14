@@ -137,11 +137,6 @@ public:
          , m_output(0.0)
          , m_timeStamp(GetMsecTime())
     {
-        TLevel(INIT);
-        TEnterMsg(("ID=%s,Kp=%f,Ki=%f,Kd=%f,Kf=%f,tolerance=%f,settlingTime=%d,"
-                   "options=%x",
-                   idString, Kp, Ki, Kd, Kf, tolerance, settlingTime,
-                   pidCtrlOptions));
 
 #ifdef _LOGDATA_PIDCTRL
         DataLogger *dataLogger = DataLogger::GetInstance();
@@ -155,7 +150,6 @@ public:
                                  DataFloat, &m_totalError);
 #endif
 
-        TExit();
     }   //TrcPIDCtrl
 
     /**
@@ -193,14 +187,7 @@ public:
          , m_startSettling(0)
          , m_setPoint(0.0)
          , m_output(0.0)
-    {
-        TLevel(INIT);
-        TEnterMsg(("Kp=%f,Ki=%f,Kd=%f,Kf=%f,tolerance=%f,settlingTime=%d,"
-                   "options=%x",
-                   Kp, Ki, Kd, Kf, tolerance, settlingTime, pidCtrlOptions));
-
-        TExit();
-    }   //TrcPIDCtrl
+    {}   //TrcPIDCtrl
 
     /**
      * Destructor: Destroy an instance of the TrcPIDCtrl object.
@@ -208,11 +195,7 @@ public:
     ~TrcPIDCtrl(
         void
         )
-    {
-        TLevel(INIT);
-        TEnter();
-        TExit();
-    }   //~TrcPIDCtrl
+    {}   //~TrcPIDCtrl
 
     /**
      * This function resets the PID controller.
@@ -222,14 +205,10 @@ public:
         void
         )
     {
-        TLevel(API);
-        TEnter();
-
         m_prevError = 0.0;
         m_totalError = 0.0;
         m_output = 0.0;
 
-        TExit();
         return;
     }   //Reset
 
@@ -243,9 +222,6 @@ public:
         void
         )
     {
-        TLevel(API);
-        TEnter();
-        TExitMsg(("=%f", m_Kp));
         return m_Kp;
     }   //GetKp
 
@@ -259,9 +235,6 @@ public:
         void
         )
     {
-        TLevel(API);
-        TEnter();
-        TExitMsg(("=%f", m_Ki));
         return m_Ki;
     }   //GetKi
 
@@ -275,9 +248,6 @@ public:
         void
         )
     {
-        TLevel(API);
-        TEnter();
-        TExitMsg(("=%f", m_Kd));
         return m_Kd;
     }   //GetKd
 
@@ -291,9 +261,6 @@ public:
         void
         )
     {
-        TLevel(API);
-        TEnter();
-        TExitMsg(("=%f", m_Kf));
         return m_Kf;
     }   //GetKf
 
@@ -313,9 +280,6 @@ public:
         double *pKf = NULL
         )
     {
-        TLevel(API);
-        TEnterMsg(("pKp=%p,pKi=%p,pKd=%p,pKf=%p", pKp, pKi, pKd, pKf));
-
         if (pKp != NULL)
         {
             *pKp = m_Kp;
@@ -336,7 +300,6 @@ public:
             *pKf = m_Kf;
         }
 
-        TExitMsg(("Kp=%f,Ki=%f,Kd=%f,Kf=%f", m_Kp, m_Ki, m_Kd, m_Kf));
         return;
     }   //GetPID
 
@@ -356,15 +319,11 @@ public:
         double Kf = 0.0
         )
     {
-        TLevel(API);
-        TEnterMsg(("Kp=%f,Ki=%f,Kd=%f", Kp, Ki, Kd));
-
         m_Kp = Kp;
         m_Ki = Ki;
         m_Kd = Kd;
         m_Kf = Kf;
 
-        TExit();
         return;
     }   //SetPID
 
@@ -378,9 +337,6 @@ public:
         void
         )
     {
-        TLevel(API);
-        TEnter();
-        TExitMsg(("=%f", m_prevError));
         return m_prevError;
     }   //GetError
 
@@ -394,9 +350,6 @@ public:
         void
         )
     {
-        TLevel(API);
-        TEnter();
-        TExitMsg(("=%f", m_setPoint));
         return m_setPoint;
     }   //GetTarget
 
@@ -412,9 +365,6 @@ public:
         float currInput
         )
     {
-        TLevel(API);
-        TEnterMsg(("setpt=%f,currInput=%f", setPoint, currInput));
-
         if (!(m_pidCtrlOptions & PIDCTRLO_ABS_SETPT))
         {
             setPoint += currInput;
@@ -444,7 +394,6 @@ public:
         m_startSettling = GetMsecTime();
         m_timeStamp = GetMsecTime();
 
-        TExit();
         return;
     }   //SetTarget
 
@@ -462,9 +411,6 @@ public:
     {
         bool fOnTarget = false;
 
-        TLevel(API);
-        TEnter();
-
         if (m_pidCtrlOptions & PIDCTRLO_NO_OSCILLATE)
         {
             if (fabs(m_prevError) <= m_tolerance)
@@ -481,7 +427,6 @@ public:
             fOnTarget = true;
         }
 
-        TExitMsg(("=%x", fOnTarget));
         return fOnTarget;
     }   //OnTarget
 
@@ -498,13 +443,9 @@ public:
         float maxInput
         )
     {
-        TLevel(API);
-        TEnterMsg(("min=%f,max=%f", minInput, maxInput));
-
         m_minInput = minInput;
         m_maxInput = maxInput;
 
-        TExit();
         return;
     }   //SetInputRange
 
@@ -520,13 +461,9 @@ public:
         float maxOutput
         )
     {
-        TLevel(API);
-        TEnterMsg(("min=%f,max=%f", minOutput, maxOutput));
-
         m_minOutput = minOutput;
         m_maxOutput = maxOutput;
 
-        TExit();
         return;
     }   //SetOutputRange
 
@@ -548,9 +485,6 @@ public:
         float adjTotalError;
         uint32_t currTime;
         float deltaTime;
-
-        TLevel(API);
-        TEnterMsg(("currInput=%f", currInput));
 
         currTime = GetMsecTime();
         deltaTime = (currTime - m_timeStamp)/1000.0;
@@ -592,7 +526,6 @@ public:
         m_prevError = error;
         m_output = output;
 
-        TExitMsg(("=%f", output));
         return output;
     }   //CalcPIDOutput
 

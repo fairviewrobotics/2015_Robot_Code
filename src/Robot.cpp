@@ -6,7 +6,6 @@
 #include <iostream>
 #include <PIDController.h>
 #include <TrcDefs.h>
-#include <DbgTrace.h>
 #include <Event.h>
 #include <TrcPIDCtrl.h>
 #include <TrcPIDDrive.h>
@@ -55,10 +54,10 @@ public:
   		controllerLeft  = new Joystick(0);
   		controllerRight = new Joystick(1);
 
-  		pidCtrlDriveRight = new TrcPIDCtrl(0.1, 0.001, 0. 0, &rightEncoder);
-		pidCtrlTurnRight = new TrcPIDCtrl(0.1, 0.001, 0. 0, &rightEncoder);
-		pidCtrlDriveLeft = new TrcPIDCtrl(0.1, 0.001, 0. 0, &leftEncoder);
-		pidCtrlTurnLeft = new TrcPIDCtrl(0.1, 0.001, 0. 0, &leftEncoder);
+  		// pidCtrlDriveRight = new TrcPIDCtrl(0.1, 0.001, 0. 0, &rightEncoder);
+		// pidCtrlTurnRight = new TrcPIDCtrl(0.1, 0.001, 0. 0, &rightEncoder);
+		// pidCtrlDriveLeft = new TrcPIDCtrl(0.1, 0.001, 0. 0, &leftEncoder);
+		// pidCtrlTurnLeft = new TrcPIDCtrl(0.1, 0.001, 0. 0, &leftEncoder);
 
   		//rightPID = new PIDController (0.1, 0.001, 0.0, &rightEncoder, &rightTalon);
   		//leftPID = new PIDController (0.1, 0.001, 0.0, &leftEncoder, &leftTalon);

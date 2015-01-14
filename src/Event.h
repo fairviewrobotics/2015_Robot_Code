@@ -47,11 +47,7 @@ public:
     Event(
         void
         ): m_fSignaled(false)
-    {
-        TLevel(INIT);
-        TEnter();
-        TExit();
-    }   //Event
+    {}   //Event
 
     /**
      * Destructor: Destroy an instance of the Event object.
@@ -59,11 +55,7 @@ public:
     ~Event(
         void
         )
-    {
-        TLevel(INIT);
-        TEnter();
-        TExit();
-    }   //~Event
+    {}   //~Event
 
     /**
      * This function is called to set the event to signaled state.
@@ -73,10 +65,7 @@ public:
         void
         )
     {
-        TLevel(API);
-        TEnter();
         m_fSignaled = true;
-        TExit();
     }   //SetEvent
 
     /**
@@ -87,10 +76,7 @@ public:
         void
         )
     {
-        TLevel(API);
-        TEnter();
         m_fSignaled = false;
-        TExit();
     }   //ClearEvent
 
     /**
@@ -104,9 +90,6 @@ public:
         void
         )
     {
-        TLevel(API);
-        TEnter();
-        TExitMsg(("=%d", m_fSignaled));
         return m_fSignaled;
     }   //IsSignaled
 
