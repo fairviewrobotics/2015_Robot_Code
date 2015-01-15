@@ -27,6 +27,9 @@ class RobotDemo : public IterativeRobot {
     Talon *rightTalon;
     Talon *leftTalon;
 
+    Talon *rightElevator;
+    Talon *leftElevator;
+
     Encoder *rightEncoder;
     Encoder *leftEncoder;
 
@@ -53,6 +56,9 @@ public:
 
   		controllerLeft  = new Joystick(0);
   		controllerRight = new Joystick(1);
+
+  		rightElevator new Talon(6);
+  		leftElevator new Talon(6);
 
   		// pidCtrlDriveRight = new TrcPIDCtrl(0.1, 0.001, 0. 0, &rightEncoder);
 		// pidCtrlTurnRight = new TrcPIDCtrl(0.1, 0.001, 0. 0, &rightEncoder);
@@ -93,11 +99,20 @@ public:
   		leftPID->SetSetpoint(1000);
   	}
   	void TeleopPeriodic(void) {
-
+  		//FIX THIS FUTURE SELF PLZ http://wpilib.screenstepslive.com/s/4485/m/13810/l/241881-joysticks (OPTION 1)
   		float leftStick  = controllerLeft->GetRawAxis(1);  // Drive system
   		float rightStick = controllerRight->GetRawAxis(1); // Drive system
   		leftTalon->SetSpeed(-leftStick);
   		rightTalon->SetSpeed(rightStick);
+  		if (controllerRight->GetTrigger()){
+  			leftElevator->SetSpeed(1.0);
+			rightElevator->SetSpeed(1.0);
+  		}
+  		else if (controllerLeft->GetTrigger()){
+  			leftElevator->SetSpeed(0.0);
+			rightElevator->SetSpeed(0.0);
+  		}
+
   		int32_t rightRate = rightEncoder->GetRate();
   		int32_t leftRate = leftEncoder->GetRate();
   		int32_t rightDistance = rightEncoder->GetDistance();
