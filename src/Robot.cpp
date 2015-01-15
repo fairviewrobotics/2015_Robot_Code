@@ -105,8 +105,8 @@ public:
   		leftTalon->SetSpeed(-leftStick);
   		rightTalon->SetSpeed(rightStick);
   		if (controllerRight->GetTrigger()){
-  			leftElevator->SetSpeed(1.0);
-			rightElevator->SetSpeed(1.0);
+  			leftElevator->SetSpeed(0.3);
+			rightElevator->SetSpeed(0.3);
   		}
   		else if (controllerLeft->GetTrigger()){
   			leftElevator->SetSpeed(0.0);
