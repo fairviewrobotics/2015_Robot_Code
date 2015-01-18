@@ -152,42 +152,7 @@ public:
 
     }   //TrcPIDCtrl
 
-    /**
-     * Constructor: Create an instance of the TrcPIDCtrl object.
-     *
-     * @param Kp Specifies the proportional coefficient.
-     * @param Ki Specifies the integral coefficient.
-     * @param Kd Specifies the derivative coefficient.
-     * @param Kf Specifies the feed forward coefficient.
-     * @param tolerance Specifies the on-target tolerance.
-     * @param settlingTime Specifes the on-target settling time in msec.
-     * @param pidCtrlOptions Specifies the option flags.
-     */
-    TrcPIDCtrl(
-        double Kp,
-        double Ki = 0.0,
-        double Kd = 0.0,
-        double Kf = 0.0,
-        float  tolerance = 0.0,
-        uint32_t settlingTime = 0,
-        uint32_t pidCtrlOptions = 0
-        ): m_Kp(Kp)
-         , m_Ki(Ki)
-         , m_Kd(Kd)
-         , m_Kf(Kf)
-         , m_tolerance(tolerance)
-         , m_settlingTime(settlingTime)
-         , m_pidCtrlOptions(pidCtrlOptions)
-         , m_minInput(0.0)
-         , m_maxInput(0.0)
-         , m_minOutput(-1.0)
-         , m_maxOutput(1.0)
-         , m_prevError(0.0)
-         , m_totalError(0.0)
-         , m_startSettling(0)
-         , m_setPoint(0.0)
-         , m_output(0.0)
-    {}   //TrcPIDCtrl
+
 
     /**
      * Destructor: Destroy an instance of the TrcPIDCtrl object.
