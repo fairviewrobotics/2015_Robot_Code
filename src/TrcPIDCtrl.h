@@ -41,8 +41,7 @@ class TrcPIDCtrl;
  * Instead, it should be inherited by a subclass who needs to provide
  * input data to a PID controller.
  */
-class PIDInput
-{
+class PIDInput {
 public:
     /**
      * This function is provided by the subclass to provide input to the PID
@@ -52,12 +51,8 @@ public:
      *
      * @return Returns the input data for the PID controller.
      */
-    virtual
-    float
-    GetInput(
-        TrcPIDCtrl *pidCtrl
-        ) = 0;
-};  //class PIDInput
+    virtual float GetInput(TrcPIDCtrl *pidCtrl) = 0;
+};
 
 /**
  * This class defines and implements the TrcPIDCtrl object. This object

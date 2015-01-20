@@ -41,57 +41,30 @@ private:
     bool    m_fSignaled;
 
 public:
-    /**
-     * Constructor: Create an instance of the Event object.
-     */
-    Event(
-        void
-        ): m_fSignaled(false)
-    {}   //Event
+    // Constructor: Create an instance of the Event object.
+    Event(void): m_fSignaled(false) {}
 
-    /**
-     * Destructor: Destroy an instance of the Event object.
-     */
-    ~Event(
-        void
-        )
-    {}   //~Event
+    // Destructor: Destroy an instance of the Event object.
+    ~Event(void) {}
 
-    /**
-     * This function is called to set the event to signaled state.
-     */
-    void
-    SetEvent(
-        void
-        )
-    {
+    // This function is called to set the event to signaled state.
+    void SetEvent(void) {
         m_fSignaled = true;
-    }   //SetEvent
+    }
 
-    /**
-     * This function is called to clear the event.
-     */
-    void
-    ClearEvent(
-        void
-        )
-    {
+    // This function is called to clear the event.
+    void ClearEvent(void) {
         m_fSignaled = false;
-    }   //ClearEvent
+    }
 
     /**
      * This function is called to check if the event is in signaled state.
      *
-     * @return Returns true if the event is in signaled state, false
-     *         otherwise.
+     * @return Returns true if the event is in signaled state, false otherwise.
      */
-    bool
-    IsSignaled(
-        void
-        )
-    {
+    bool IsSignaled(void) {
         return m_fSignaled;
-    }   //IsSignaled
+    }
 
 };  //class Event
 
