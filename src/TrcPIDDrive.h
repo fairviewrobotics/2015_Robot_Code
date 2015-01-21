@@ -59,11 +59,7 @@ public:
     /**
      * This function stops the PID Drive object.
      */
-    void
-    Stop(
-        void
-        )
-    {
+    void Stop(void) {
         m_drive->StopMotor();
 
         if (m_pidCtrlYDrive != NULL)
@@ -125,11 +121,7 @@ public:
     /**
      * Destructor: Destroy an instance of the TrcPIDDrive object.
      */
-    virtual
-    ~TrcPIDDrive(
-        void
-        )
-    {
+    virtual ~TrcPIDDrive(void) {
         Stop();
     }   //~TrcPIDDrive
 
@@ -179,41 +171,10 @@ public:
     }   //SetTarget
 
     /**
-     * This function sets PID drive angle target with specifies X and Y drive
-     * powers. In other words, it allows manual drive with automatic PID
-     * controlled heading. This only make sense for Mecanum drive train. If it
-     * is not mecanum, this function does nothing.
-     *
-     * @param yPower Specifies the drive power of the Y direction.
-     * @param angleSetPoint Specifies the target angle relative to current
-     *        angle.
-     */
-    void
-    SetAngleTarget(
-        float yPower,
-        float angleSetPoint
-        )
-    {
-		m_yPower = yPower;
-
-		if (m_pidCtrlTurn != NULL) {
-			m_pidCtrlTurn->SetTarget(angleSetPoint, m_pidInput->GetInput(m_pidCtrlTurn));
-		}
-
-		m_pidDriveFlags = PIDDRIVEF_PIDDRIVE_ON | PIDDRIVEF_MANUAL_DRIVE;
-
-        return;
-    }   //SetAngleTarget
-
-    /**
      * This function is called to abort a PID controlled drive in progress.
      * This makes PID controlled drive interruptible by external condition.
      */
-    void
-    Abort(
-        void
-        )
-    {
+    void Abort(void) {
         if (m_pidDriveFlags & PIDDRIVEF_PIDDRIVE_ON)
         {
             Stop();
@@ -233,11 +194,7 @@ public:
      *
      * @param mode Specifies the CoopTask callback types.
      */
-    void
-    TaskPostPeriodic(
-        uint32_t mode
-        )
-    {
+    void TaskPostPeriodic(uint32_t mode) {
         if (m_pidDriveFlags & PIDDRIVEF_PIDDRIVE_ON)
         {
             float yPower = ((m_pidDriveFlags & PIDDRIVEF_TURN_ONLY) ||

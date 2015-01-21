@@ -147,4 +147,18 @@ RemoveTailList(
 
 #define BOUND_INPUT(n)          BOUND(n, INPUT_RANGE_MIN, INPUT_RANGE_MAX)
 
+#define YDRIVE_KP                       0.022        //0.022
+#define YDRIVE_KI                       0.0
+#define YDRIVE_KD                       0.0
+#define YDRIVE_KF                       0.0
+#define YDRIVE_TOLERANCE                1.0
+#define YDRIVE_SETTLING                 200
+
+#define TURN_KP                         0.012       //0.012[3/2/14]
+#define TURN_KI                         0.0
+#define TURN_KD                         0.0
+#define TURN_KF                         0.0
+#define TURN_TOLERANCE                  1.0
+#define TURN_SETTLING                   200
+
 #endif  //ifndef _TRCDEFS_H

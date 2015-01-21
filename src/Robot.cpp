@@ -24,8 +24,6 @@ class RobotDemo : public IterativeRobot {
     Talon *rightTalon;
     Talon *leftTalon;
 
-    RobotDrive *robotDrive;
-
     Talon *rightElevator;
     Talon *leftElevator;
 
@@ -49,9 +47,12 @@ public:
   		rightTalon = new Talon(8);
   		leftTalon  = new Talon(9);
 
-  		robotDrive = new RobotDrive(rightTalon, leftTalon);
-  		robotDrive->SetInvertedMotor(RobotDrive::kFrontLeftMotor, true);
-  		robotDrive->SetInvertedMotor(RobotDrive::kRearLeftMotor, true);
+  		pidCtrlDrive = new TrcPIDCtrl(YDRIVE_KP, YDRIVE_KI, YDRIVE_KD, YDRIVE_KF, YDRIVE_TOLERANCE, YDRIVE_SETTLING);
+  		pidCtrlTurn = new TrcPIDCtrl(TURN_KP, TURN_KI, TURN_KD, TURN_KF, TURN_TOLERANCE, TURN_SETTLING);
+
+  		autoDriveBase = new DriveBase(rightTalon, leftTalon, pidCtrlDrive, pidCtrlTurn);
+  		autoDriveBase->SetInvertedMotor(RobotDrive::kFrontLeftMotor, true);
+  		autoDriveBase->SetInvertedMotor(RobotDrive::kRearLeftMotor, true);
 
   		rightEncoder = new Encoder(7, 6, true, Encoder::EncodingType::k4X);
   		leftEncoder = new Encoder(9, 8, false, Encoder::EncodingType::k4X);
@@ -62,9 +63,7 @@ public:
   		rightElevator = new Talon(6);
   		leftElevator = new Talon(6);
 
-//  		pidDrive = new TrcPIDDrive(pidDrive, pidCtrlDrive, pidCtrlTurn);
-  		autoDriveBase = new DriveBase(rightTalon, leftTalon, pidCtrlDrive, pidCtrlTurn);
-
+  		// pidCtrlDrive = new TrcPIDCtrl(0.1, 0.001, 0. 0, &rightEncoder);
   		// pidCtrlDriveRight = new TrcPIDCtrl(0.1, 0.001, 0. 0, &rightEncoder);
 		// pidCtrlTurnRight = new TrcPIDCtrl(0.1, 0.001, 0. 0, &rightEncoder);
 		// pidCtrlDriveLeft = new TrcPIDCtrl(0.1, 0.001, 0. 0, &leftEncoder);
@@ -97,14 +96,19 @@ public:
   	void AutonomousPeriodic(void) {
   		rightPID->SetSetpoint(1000);
   		leftPID->SetSetpoint(1000);
+
+  		pidCtrlDrive->SetOutputRange(-0.5, 0.5);
+  		pidCtrlTurn->SetOutputRange(-0.5, 0.5);
+//  		autoDriveBase->DriveSetTarget(0.0,
+//  		                             -autoDistance * 12.0,
+//  		                             0.0,
+//  		                             false,
+//  		                             &autoDriveEvent);
+//  		autoSM->WaitForSingleEvent(&autoDriveEvent, currState + 1);
   	}
 
   	void TeleopPeriodic(void) {
-  		// float leftStick  = controllerLeft->GetRawAxis(1);  // Drive system
-  		// float rightStick = controllerRight->GetRawAxis(1); // Drive system
-  		// leftTalon->SetSpeed(-leftStick);
-  		// rightTalon->SetSpeed(rightStick);
-  		robotDrive->TankDrive(controllerLeft, controllerRight);
+  		autoDriveBase->TankDrive(controllerLeft, controllerRight);
 
   		if (controllerRight->GetTrigger()) {
   			leftElevator->SetSpeed(0.3);

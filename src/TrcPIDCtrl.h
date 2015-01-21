@@ -11,10 +11,12 @@
 /// <remarks>
 ///     Environment: Wind River C++ for National Instrument cRIO based Robot.
 /// </remarks>
+
 #endif
 
 #ifndef _TRCPIDCTRL_H
 #define _TRCPIDCTRL_H
+
 
 #ifdef MOD_ID
     #undef MOD_ID
@@ -95,61 +97,6 @@ public:
     /**
      * Constructor: Create an instance of the TrcPIDCtrl object.
      *
-     * @param idString Identifying the PID controller, mainly for logging
-     *        purpose.
-     * @param Kp Specifies the proportional coefficient.
-     * @param Ki Specifies the integral coefficient.
-     * @param Kd Specifies the derivative coefficient.
-     * @param Kf Specifies the feed forward coefficient.
-     * @param tolerance Specifies the on-target tolerance.
-     * @param settlingTime Specifes the on-target settling time in msec.
-     * @param pidCtrlOptions Specifies the option flags.
-     */
-    TrcPIDCtrl(
-        char  *idString,
-        double Kp,
-        double Ki = 0.0,
-        double Kd = 0.0,
-        double Kf = 0.0,
-        float  tolerance = 0.0,
-        uint32_t settlingTime = 0,
-        uint32_t pidCtrlOptions = 0
-        ): m_Kp(Kp)
-         , m_Ki(Ki)
-         , m_Kd(Kd)
-         , m_Kf(Kf)
-         , m_tolerance(tolerance)
-         , m_settlingTime(settlingTime)
-         , m_pidCtrlOptions(pidCtrlOptions)
-         , m_minInput(0.0)
-         , m_maxInput(0.0)
-         , m_minOutput(-1.0)
-         , m_maxOutput(1.0)
-         , m_prevError(0.0)
-         , m_totalError(0.0)
-         , m_startSettling(0)
-         , m_setPoint(0.0)
-         , m_output(0.0)
-         , m_timeStamp(GetMsecTime())
-    {
-
-#ifdef _LOGDATA_PIDCTRL
-        DataLogger *dataLogger = DataLogger::GetInstance();
-        dataLogger->AddDataPoint(MOD_NAME, idString, "setPt", "%f",
-                                 DataFloat, &m_setPoint);
-        dataLogger->AddDataPoint(MOD_NAME, idString, "output", "%f",
-                                 DataFloat, &m_output);
-        dataLogger->AddDataPoint(MOD_NAME, idString, "error", "%f",
-                                 DataFloat, &m_prevError);
-        dataLogger->AddDataPoint(MOD_NAME, idString, "totalError", "%f",
-                                 DataFloat, &m_totalError);
-#endif
-
-    }   //TrcPIDCtrl
-
-    /**
-     * Constructor: Create an instance of the TrcPIDCtrl object.
-     *
      * @param Kp Specifies the proportional coefficient.
      * @param Ki Specifies the integral coefficient.
      * @param Kd Specifies the derivative coefficient.
@@ -184,80 +131,53 @@ public:
          , m_output(0.0)
     {}   //TrcPIDCtrl
 
-    /**
-     * Destructor: Destroy an instance of the TrcPIDCtrl object.
-     */
-    ~TrcPIDCtrl(
-        void
-        )
-    {}   //~TrcPIDCtrl
+    // Destructor: Destroy an instance of the TrcPIDCtrl object.
+    ~TrcPIDCtrl(void) {}
 
-    /**
-     * This function resets the PID controller.
-     */
-    void
-    Reset(
-        void
-        )
-    {
+    // This function resets the PID controller.
+    void Reset(void) {
         m_prevError = 0.0;
         m_totalError = 0.0;
         m_output = 0.0;
 
         return;
-    }   //Reset
+    }
 
     /**
      * This function gets the proportional constant.
      *
      * @return Proportional coefficient constant.
      */
-    float
-    GetKp(
-        void
-        )
-    {
+    float GetKp(void) {
         return m_Kp;
-    }   //GetKp
+    }
 
     /**
      * This function gets the integral constant.
      *
      * @return Integral coefficient constant.
      */
-    float
-    GetKi(
-        void
-        )
-    {
+    float GetKi(void) {
         return m_Ki;
-    }   //GetKi
+    }
 
     /**
      * This function gets the differential constant.
      *
      * @return Differential coefficient constant.
      */
-    float
-    GetKd(
-        void
-        )
-    {
+    float GetKd(void) {
         return m_Kd;
-    }   //GetKd
+    }
 
     /**
      * This function gets the feed forward constant.
      *
      * @return Feed forward coefficient constant.
      */
-    float
-    GetKf(
-        void
-        )
-    {
+    float GetKf(void) {
         return m_Kf;
-    }   //GetKf
+    }
 
     /**
      * This function gets the PID controller constants.
@@ -273,25 +193,20 @@ public:
         double *pKi = NULL,
         double *pKd = NULL,
         double *pKf = NULL
-        )
-    {
-        if (pKp != NULL)
-        {
+    ) {
+        if (pKp != NULL) {
             *pKp = m_Kp;
         }
 
-        if (pKi != NULL)
-        {
+        if (pKi != NULL) {
             *pKi = m_Ki;
         }
 
-        if (pKd != NULL)
-        {
+        if (pKd != NULL) {
             *pKd = m_Kd;
         }
 
-        if (pKf != NULL)
-        {
+        if (pKf != NULL) {
             *pKf = m_Kf;
         }
 
@@ -312,8 +227,7 @@ public:
         double Ki = 0.0,
         double Kd = 0.0,
         double Kf = 0.0
-        )
-    {
+    ) {
         m_Kp = Kp;
         m_Ki = Ki;
         m_Kd = Kd;
@@ -327,26 +241,18 @@ public:
      *
      * @return the last error.
      */
-    float
-    GetError(
-        void
-        )
-    {
+    float GetError(void) {
         return m_prevError;
-    }   //GetError
+    }
 
     /**
      * This function gets the PID controller setpoint.
      *
      * @return the current setpoint.
      */
-    float
-    GetTarget(
-        void
-        )
-    {
+    float GetTarget(void) {
         return m_setPoint;
-    }   //GetTarget
+    }
 
     /**
      * This function sets the PID controller setpoint.
@@ -354,12 +260,7 @@ public:
      * @param setPoint Specifies the target setpoint.
      * @param currInput Specifies the current input value.
      */
-    void
-    SetTarget(
-        float setPoint,
-        float currInput
-        )
-    {
+    void SetTarget(float setPoint, float currInput) {
         if (!(m_pidCtrlOptions & PIDCTRLO_ABS_SETPT))
         {
             setPoint += currInput;
@@ -399,11 +300,7 @@ public:
      *
      * @return True if we are on target, false otherwise.
      */
-    bool
-    OnTarget(
-        void
-        )
-    {
+    bool OnTarget(void) {
         bool fOnTarget = false;
 
         if (m_pidCtrlOptions & PIDCTRLO_NO_OSCILLATE)
