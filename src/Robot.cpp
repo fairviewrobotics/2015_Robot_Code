@@ -6,11 +6,11 @@
 #include <iostream>
 #include <PIDController.h>
 #include <TrcDefs.h>
-#include <Event.h>
-#include <DriveBase.h>
-#include <TrcPIDCtrl.h>
-#include <TrcPIDDrive.h>
-#include <TrcPIDMotor.h>
+// #include <Event.h>
+// #include <DriveBase.h>
+// #include <TrcPIDCtrl.h>
+// #include <TrcPIDDrive.h>
+// #include <TrcPIDMotor.h>
 
 #define __PRINT_COMMAND_H__
 #define DRIVE_ENCODER_PPR 2048
@@ -33,26 +33,24 @@ class RobotDemo : public IterativeRobot {
     Joystick *controllerLeft;
     Joystick *controllerRight;
 
+    RobotDrive *robotDrive;
+
+    // TrcPIDCtrl *pidCtrlDrive;
+    // TrcPIDCtrl *pidCtrlTurn;
     PIDController *rightPID;
     PIDController *leftPID;
-
-    TrcPIDDrive *pidDrive;
-    DriveBase *autoDriveBase;
-
-    TrcPIDCtrl *pidCtrlDrive;
-    TrcPIDCtrl *pidCtrlTurn;
 
 public:
     RobotDemo(void) {
   		rightTalon = new Talon(8);
   		leftTalon  = new Talon(9);
 
-  		pidCtrlDrive = new TrcPIDCtrl(YDRIVE_KP, YDRIVE_KI, YDRIVE_KD, YDRIVE_KF, YDRIVE_TOLERANCE, YDRIVE_SETTLING);
-  		pidCtrlTurn = new TrcPIDCtrl(TURN_KP, TURN_KI, TURN_KD, TURN_KF, TURN_TOLERANCE, TURN_SETTLING);
+  		// pidCtrlDrive = new TrcPIDCtrl(YDRIVE_KP, YDRIVE_KI, YDRIVE_KD, YDRIVE_KF, YDRIVE_TOLERANCE, YDRIVE_SETTLING);
+  		// pidCtrlTurn = new TrcPIDCtrl(TURN_KP, TURN_KI, TURN_KD, TURN_KF, TURN_TOLERANCE, TURN_SETTLING);
 
-  		autoDriveBase = new DriveBase(rightTalon, leftTalon, pidCtrlDrive, pidCtrlTurn);
-  		autoDriveBase->SetInvertedMotor(RobotDrive::kFrontLeftMotor, true);
-  		autoDriveBase->SetInvertedMotor(RobotDrive::kRearLeftMotor, true);
+  		robotDrive = new RobotDrive(rightTalon, leftTalon);
+  		robotDrive->SetInvertedMotor(RobotDrive::kFrontLeftMotor, true);
+  		robotDrive->SetInvertedMotor(RobotDrive::kRearLeftMotor, true);
 
   		rightEncoder = new Encoder(7, 6, true, Encoder::EncodingType::k4X);
   		leftEncoder = new Encoder(9, 8, false, Encoder::EncodingType::k4X);
@@ -63,14 +61,8 @@ public:
   		rightElevator = new Talon(6);
   		leftElevator = new Talon(6);
 
-  		// pidCtrlDrive = new TrcPIDCtrl(0.1, 0.001, 0. 0, &rightEncoder);
-  		// pidCtrlDriveRight = new TrcPIDCtrl(0.1, 0.001, 0. 0, &rightEncoder);
-		// pidCtrlTurnRight = new TrcPIDCtrl(0.1, 0.001, 0. 0, &rightEncoder);
-		// pidCtrlDriveLeft = new TrcPIDCtrl(0.1, 0.001, 0. 0, &leftEncoder);
-		// pidCtrlTurnLeft = new TrcPIDCtrl(0.1, 0.001, 0. 0, &leftEncoder);
-
-  		// rightPID = new PIDController(0.1, 0.001, 0.0, &rightEncoder, &rightTalon);
-  		// leftPID =  new PIDController(0.1, 0.001, 0.0, &leftEncoder, &leftTalon);
+  		rightPID = new PIDController(0.1, 0.001, 0.0, rightEncoder, rightTalon);
+  		leftPID =  new PIDController(0.1, 0.001, 0.0, leftEncoder, leftTalon);
     }
 
   	/********************************** Init Routines *************************************/
@@ -97,8 +89,8 @@ public:
   		rightPID->SetSetpoint(1000);
   		leftPID->SetSetpoint(1000);
 
-  		pidCtrlDrive->SetOutputRange(-0.5, 0.5);
-  		pidCtrlTurn->SetOutputRange(-0.5, 0.5);
+  		// pidCtrlDrive->SetOutputRange(-0.5, 0.5);
+  		// pidCtrlTurn->SetOutputRange(-0.5, 0.5);
 //  		autoDriveBase->DriveSetTarget(0.0,
 //  		                             -autoDistance * 12.0,
 //  		                             0.0,
@@ -108,7 +100,7 @@ public:
   	}
 
   	void TeleopPeriodic(void) {
-  		autoDriveBase->TankDrive(controllerLeft, controllerRight);
+  		robotDrive->TankDrive(controllerLeft, controllerRight);
 
   		if (controllerRight->GetTrigger()) {
   			leftElevator->SetSpeed(0.3);
