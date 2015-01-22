@@ -41,8 +41,8 @@ class RobotDemo : public IterativeRobot {
 
 public:
     RobotDemo(void) {
-  		rightTalon = new Talon(8);
-  		leftTalon  = new Talon(9);
+    	leftTalon  = new Talon(0);
+  		rightTalon = new Talon(1);
 
   		// pidCtrlDrive = new TrcPIDCtrl(YDRIVE_KP, YDRIVE_KI, YDRIVE_KD, YDRIVE_KF, YDRIVE_TOLERANCE, YDRIVE_SETTLING);
   		// pidCtrlTurn = new TrcPIDCtrl(TURN_KP, TURN_KI, TURN_KD, TURN_KF, TURN_TOLERANCE, TURN_SETTLING);
@@ -51,16 +51,16 @@ public:
   		robotDrive->SetInvertedMotor(RobotDrive::kFrontLeftMotor, true);
   		robotDrive->SetInvertedMotor(RobotDrive::kRearLeftMotor, true);
 
-  		rightEncoder = new Encoder(7, 6, true, Encoder::EncodingType::k4X);
-  		leftEncoder = new Encoder(9, 8, false, Encoder::EncodingType::k4X);
+  		leftEncoder = new Encoder(0, 1, false, Encoder::EncodingType::k4X);
+  		rightEncoder = new Encoder(2, 3, false, Encoder::EncodingType::k4X);
 
   		controllerLeft  = new Joystick(0);
   		controllerRight = new Joystick(1);
 
   		elevator = new Victor(2);
 
-  		rightPID = new PIDController(0.1, 0.001, 0.0, rightEncoder, rightTalon);
-  		leftPID =  new PIDController(0.1, 0.001, 0.0, leftEncoder, leftTalon);
+  		rightPID = new PIDController(0.2, 0.0, 0.0, rightEncoder, rightTalon);
+  		leftPID =  new PIDController(0.2, 0.0, 0.0, leftEncoder, leftTalon);
     }
 
   	/********************************** Init Routines *************************************/
@@ -70,10 +70,17 @@ public:
   		leftEncoder->SetDistancePerPulse(PI*4/360.0);
   	}
 
-  	void DisabledInit(void) {}
+  	void DisabledInit(void) {
+  		rightPID->Reset();
+  		leftPID->Reset();
+  	}
+
   	void AutonomousInit(void) {
   		rightPID->Enable();
   		leftPID->Enable();
+
+  		rightPID->SetSetpoint(1.5);
+  		leftPID->SetSetpoint(1.5);
   	}
 
   	void TeleopInit(void) {
@@ -87,8 +94,7 @@ public:
   	void DisabledPeriodic(void) {}
 
   	void AutonomousPeriodic(void) {
-  		rightPID->SetSetpoint(20.0);
-  		leftPID->SetSetpoint(20.0);
+  		cout << "Error: " << rightPID->GetError() << " Setpoint: " << rightPID->GetSetpoint() << endl;
   	}
 
   	void TeleopPeriodic(void) {
@@ -97,6 +103,8 @@ public:
   		if (controllerRight->GetTrigger()) {
   			elevator->SetSpeed(0.3);
   		} else if (controllerLeft->GetTrigger()) {
+  			elevator->SetSpeed(-0.3);
+  		} else {
   			elevator->SetSpeed(0.0);
   		}
 
