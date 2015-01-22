@@ -24,8 +24,7 @@ class RobotDemo : public IterativeRobot {
     Talon *rightTalon;
     Talon *leftTalon;
 
-    Talon *rightElevator;
-    Talon *leftElevator;
+    Victor *elevator;
 
     Encoder *rightEncoder;
     Encoder *leftEncoder;
@@ -58,8 +57,7 @@ public:
   		controllerLeft  = new Joystick(0);
   		controllerRight = new Joystick(1);
 
-  		rightElevator = new Talon(6);
-  		leftElevator = new Talon(6);
+  		elevator = new Victor(2);
 
   		rightPID = new PIDController(0.1, 0.001, 0.0, rightEncoder, rightTalon);
   		leftPID =  new PIDController(0.1, 0.001, 0.0, leftEncoder, leftTalon);
@@ -73,7 +71,10 @@ public:
   	}
 
   	void DisabledInit(void) {}
-  	void AutonomousInit(void) {}
+  	void AutonomousInit(void) {
+  		rightPID->Enable();
+  		leftPID->Enable();
+  	}
 
   	void TeleopInit(void) {
   		// Set all motor controllers to be not moving initially.
@@ -86,28 +87,17 @@ public:
   	void DisabledPeriodic(void) {}
 
   	void AutonomousPeriodic(void) {
-  		rightPID->SetSetpoint(1000);
-  		leftPID->SetSetpoint(1000);
-
-  		// pidCtrlDrive->SetOutputRange(-0.5, 0.5);
-  		// pidCtrlTurn->SetOutputRange(-0.5, 0.5);
-//  		autoDriveBase->DriveSetTarget(0.0,
-//  		                             -autoDistance * 12.0,
-//  		                             0.0,
-//  		                             false,
-//  		                             &autoDriveEvent);
-//  		autoSM->WaitForSingleEvent(&autoDriveEvent, currState + 1);
+  		rightPID->SetSetpoint(20.0);
+  		leftPID->SetSetpoint(20.0);
   	}
 
   	void TeleopPeriodic(void) {
   		robotDrive->TankDrive(controllerLeft, controllerRight);
 
   		if (controllerRight->GetTrigger()) {
-  			leftElevator->SetSpeed(0.3);
-			rightElevator->SetSpeed(0.3);
+  			elevator->SetSpeed(0.3);
   		} else if (controllerLeft->GetTrigger()) {
-  			leftElevator->SetSpeed(0.0);
-			rightElevator->SetSpeed(0.0);
+  			elevator->SetSpeed(0.0);
   		}
 
   		// int32_t rightRate = rightEncoder->GetRate();
