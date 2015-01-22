@@ -1,34 +1,11 @@
 #include "WPILib.h"
-#include <Encoder.h>
-#include <Counter.h>
-#include "Commands/Command.h"
-#include <string>
-#include <iostream>
-#include <PIDController.h>
-#include <TrcDefs.h>
-#include <Event.h>
-#include <TrcPIDCtrl.h>
-#include <TrcPIDDrive.h>
-#include <TrcPIDMotor.h>
-
-#define __PRINT_COMMAND_H__
 
 using namespace std;
-
-//double GetRaw();
-
-//const double PI = 3.14159265359;
-
-
-
 
 class RobotDemo : public IterativeRobot {
 	// Drive system motor controllers
     Talon *rightTalon;
     Talon *leftTalon;
-
-    //Talon *rightElevator;
-    //Talon *leftElevator;
 
     Encoder *rightEncoder;
     Encoder *leftEncoder;
@@ -36,37 +13,17 @@ class RobotDemo : public IterativeRobot {
     Joystick *controllerLeft;
     Joystick *controllerRight;
 
-    //PIDController *rightPID;
-    //PIDController *leftPID;
-
-   /* TrcPIDCtrl *pidCtrlDriveRight;
-    TrcPIDCtrl *pidCtrlTurnRight;
-    TrcPIDCtrl *pidCtrlDriveLeft;
-    TrcPIDCtrl *pidCtrlTurnLeft;
-*/
-
 public:
     RobotDemo(void) {
 
-  		rightTalon = new Talon(8);
-  		leftTalon  = new Talon(9);
+  		rightTalon = new Talon(1);
+  		leftTalon  = new Talon(0);
 
-  	//	rightEncoder = new Encoder(7,6,true,Encoder::EncodingType::k4X);
-  		//leftEncoder = new Encoder(9,8, false,Encoder::EncodingType::k4X);
+  		rightEncoder = new Encoder(2,3,true,Encoder::EncodingType::k4X);
+  		leftEncoder = new Encoder(0,1, false,Encoder::EncodingType::k4X);
 
   		controllerLeft  = new Joystick(0);
   		controllerRight = new Joystick(1);
-
-  		//rightElevator = new Talon(6);
-  		//leftElevator = new Talon(6);
-
-  		// pidCtrlDriveRight = new TrcPIDCtrl(0.1, 0.001, 0. 0, &rightEncoder);
-		// pidCtrlTurnRight = new TrcPIDCtrl(0.1, 0.001, 0. 0, &rightEncoder);
-		// pidCtrlDriveLeft = new TrcPIDCtrl(0.1, 0.001, 0. 0, &leftEncoder);
-		// pidCtrlTurnLeft = new TrcPIDCtrl(0.1, 0.001, 0. 0, &leftEncoder);
-
-  		//rightPID = new PIDController (0.1, 0.001, 0.0, &rightEncoder, &rightTalon);
-  		//leftPID = new PIDController (0.1, 0.001, 0.0, &leftEncoder, &leftTalon);
 
     }
 
@@ -74,8 +31,6 @@ public:
   	/********************************** Init Routines *************************************/
 
   	void RobotInit(void) {
-  		rightEncoder->SetDistancePerPulse(PI*4/360.0);
-  		leftEncoder->SetDistancePerPulse(PI*4/360.0);
 
   	}
 
@@ -96,40 +51,29 @@ public:
 
   	void DisabledPeriodic(void) {}
   	void AutonomousPeriodic(void) {
-  		//rightPID->SetSetpoint(1000);
-  		//leftPID->SetSetpoint(1000);
+  		int32_t rightDistance = rightEncoder->GetDistance();
+  		int32_t leftDistance = leftEncoder->GetDistance();
+  		if(abs(rightDistance)<10240) rightTalon->SetSpeed(1.0);
+  		else rightTalon->SetSpeed(0.0);
+  		if(abs(leftDistance)<10240) leftTalon->SetSpeed(1.0);
+  		else leftTalon->SetSpeed(0.0);
+
   	}
   	void TeleopPeriodic(void) {
 
-  		//FIX THIS FUTURE SELF PLZ http://wpilib.screenstepslive.com/s/4485/m/13810/l/241881-joysticks (OPTION 1)
   		float leftStick  = controllerLeft->GetRawAxis(1);  // Drive system
   		float rightStick = controllerRight->GetRawAxis(1); // Drive system
-  		float leftQuickAdjustConstant = controllerLeft->GetRawAxis(2); //for quick modification of overall speed
-  		float rightQuickAdjustConstant = controllerRight->GetRawAxis(2); //for quick modification of overall speed
+
+
   		leftTalon->SetSpeed(-leftStick);
   		rightTalon->SetSpeed(rightStick);
-  		/*
-  		if (controllerRight->GetTrigger()){
-  			leftElevator->SetSpeed(0.3);
-			rightElevator->SetSpeed(0.3);
-  		}
-  		else if (controllerLeft->GetTrigger()){
-  			leftElevator->SetSpeed(0.0);
-			rightElevator->SetSpeed(0.0);
-  		}
 
-  		int32_t rightRate = rightEncoder->GetRate();
-  		int32_t leftRate = leftEncoder->GetRate();
   		int32_t rightDistance = rightEncoder->GetDistance();
   		int32_t leftDistance = leftEncoder->GetDistance();
 
+  		cout << "Right Encoder: " << rightDistance << "   Left Encoder: " << leftDistance << endl;
 
-  		cout << "Right: " << rightDistance << endl;
-  		cout << "Left: " << leftDistance << endl;
-		cout << "\n";
-		*/
   	}
-
   	void DisabledContinuous(void) {}
   	void AutonomousContinuous(void) {}
   	void TeleopContinuous(void) {}
