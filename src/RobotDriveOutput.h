@@ -1,7 +1,7 @@
 #ifndef SRC_ROBOTDRIVEOUTPUT_H_
 #define SRC_ROBOTDRIVEOUTPUT_H_
 
-class RobotDriveOutput: PIDOutput {
+class RobotDriveOutput: public PIDOutput {
 private:
   RobotDrive* m_baseDrive;
 

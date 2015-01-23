@@ -61,8 +61,8 @@ public:
 
   		elevator = new Victor(2);
 
-  		rightPID = new PIDController(0.02, 0.0, 0.0, rightDistance, rightTalon);
-  		leftPID =  new PIDController(0.02, 0.0, 0.0, leftDistance, leftTalon);
+  		rightPID = new PIDController(0.005, 0.0, 0.04, rightDistance, rightTalon);
+  		leftPID =  new PIDController(0.005, 0.0, 0.04, leftDistance, leftTalon);
     }
 
   	/********************************** Init Routines *************************************/
