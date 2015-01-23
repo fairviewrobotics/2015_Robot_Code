@@ -6,11 +6,8 @@
 #include <iostream>
 #include <PIDController.h>
 #include <TrcDefs.h>
-// #include <Event.h>
-// #include <DriveBase.h>
-// #include <TrcPIDCtrl.h>
-// #include <TrcPIDDrive.h>
-// #include <TrcPIDMotor.h>
+#include <DistanceEncoder.h>
+#include <RobotDriveOutput.h>
 
 #define __PRINT_COMMAND_H__
 #define DRIVE_ENCODER_PPR 2048
