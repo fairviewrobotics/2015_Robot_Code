@@ -25,6 +25,8 @@ class RobotDemo : public IterativeRobot {
 
     Encoder *rightEncoder;
     Encoder *leftEncoder;
+    DistanceEncoder *rightDistance;
+    DistanceEncoder *leftDistance;
 
     Joystick *controllerLeft;
     Joystick *controllerRight;
@@ -48,16 +50,19 @@ public:
   		robotDrive->SetInvertedMotor(RobotDrive::kFrontLeftMotor, true);
   		robotDrive->SetInvertedMotor(RobotDrive::kRearLeftMotor, true);
 
-  		leftEncoder = new Encoder(0, 1, false, Encoder::EncodingType::k4X);
-  		rightEncoder = new Encoder(2, 3, false, Encoder::EncodingType::k4X);
+  		leftEncoder = new Encoder(0, 1, true, Encoder::EncodingType::k4X);
+  		rightEncoder = new Encoder(2, 3, true, Encoder::EncodingType::k4X);
+
+  		leftDistance = new DistanceEncoder(leftEncoder);
+  		rightDistance = new DistanceEncoder(rightEncoder);
 
   		controllerLeft  = new Joystick(0);
   		controllerRight = new Joystick(1);
 
   		elevator = new Victor(2);
 
-  		rightPID = new PIDController(0.2, 0.0, 0.0, rightEncoder, rightTalon);
-  		leftPID =  new PIDController(0.2, 0.0, 0.0, leftEncoder, leftTalon);
+  		rightPID = new PIDController(0.02, 0.0, 0.0, rightDistance, rightTalon);
+  		leftPID =  new PIDController(0.02, 0.0, 0.0, leftDistance, leftTalon);
     }
 
   	/********************************** Init Routines *************************************/
@@ -76,8 +81,8 @@ public:
   		rightPID->Enable();
   		leftPID->Enable();
 
-  		rightPID->SetSetpoint(1.5);
-  		leftPID->SetSetpoint(1.5);
+  		rightPID->SetSetpoint(2000);
+  		leftPID->SetSetpoint(2000);
   	}
 
   	void TeleopInit(void) {
@@ -91,7 +96,8 @@ public:
   	void DisabledPeriodic(void) {}
 
   	void AutonomousPeriodic(void) {
-  		cout << "Error: " << rightPID->GetError() << " Setpoint: " << rightPID->GetSetpoint() << endl;
+  		cout << "Right error: " << rightPID->GetError() << " Setpoint: " << rightPID->GetSetpoint() << endl;
+  		cout << "Left error: " << leftPID->GetError() << " Setpoint: " << leftPID->GetSetpoint() << endl;
   	}
 
   	void TeleopPeriodic(void) {
