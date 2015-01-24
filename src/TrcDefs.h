@@ -29,60 +29,6 @@
 //
 // Macros.
 //
-
-//
-// List entry macros.
-//
-typedef struct _ListEntry
-{
-    struct _ListEntry *Flink;
-    struct _ListEntry *Blink;
-} LIST_ENTRY, *PLIST_ENTRY;
-
-#define InitializeListHead(h)   ((h)->Flink = (h)->Blink = (h))
-#define InsertHeadList(h,e)     ((e)->Flink = (h)->Flink,               \
-                                 (e)->Blink = (h),                      \
-                                 (h)->Flink->Blink = (e),               \
-                                 (h)->Flink = (e))
-#define InsertTailList(h,e)     ((e)->Flink = (h),                      \
-                                 (e)->Blink = (h)->Blink,               \
-                                 (h)->Blink->Flink = (e),               \
-                                 (h)->Blink = (e))
-#define IsListEmpty(h)          ((h)->Flink == (h))
-
-__inline
-void
-RemoveEntryList(
-    PLIST_ENTRY e
-    )
-{
-    e->Blink->Flink = e->Flink;
-    e->Flink->Blink = e->Blink;
-    e->Flink = e->Blink = NULL;
-}   //RemoveEntryList
-
-__inline
-PLIST_ENTRY
-RemoveHeadList(
-    PLIST_ENTRY h
-    )
-{
-    PLIST_ENTRY entry = IsListEmpty(h)? NULL: h->Flink;
-    RemoveEntryList(entry);
-    return entry;
-}   //RemoveHeadList
-
-__inline
-PLIST_ENTRY
-RemoveTailList(
-    PLIST_ENTRY h
-    )
-{
-    PLIST_ENTRY entry = IsListEmpty(h)? NULL: h->Blink;
-    RemoveEntryList(entry);
-    return entry;
-}   //RemoveTailList
-
 #define FIELD_OFFSET(t,f)       ((INT32)&(((t *)0)->f))
 #define CONTAINING_RECORD(p,t,f) ((t *)(((char *)(p)) - FIELD_OFFSET(t, f)))
 
@@ -101,15 +47,6 @@ RemoveTailList(
 
 #define GetUsecTime()           GetFPGATime()
 #define GetMsecTime()           (GetUsecTime()/1000)
-
-#define LCD_LINE1               DriverStationLCD::kUser_Line1
-#define LCD_LINE2               DriverStationLCD::kUser_Line2
-#define LCD_LINE3               DriverStationLCD::kUser_Line3
-#define LCD_LINE4               DriverStationLCD::kUser_Line4
-#define LCD_LINE5               DriverStationLCD::kUser_Line5
-#define LCD_LINE6               DriverStationLCD::kUser_Line6
-
-#define LCDPrintf(p)            DriverStationLCD::GetInstance()->PrintfLine p
 
 //
 // The BOUND macro limits the value (n) within the bounds between the given
@@ -147,14 +84,14 @@ RemoveTailList(
 
 #define BOUND_INPUT(n)          BOUND(n, INPUT_RANGE_MIN, INPUT_RANGE_MAX)
 
-#define YDRIVE_KP                       0.022        //0.022
+#define YDRIVE_KP                       0.022
 #define YDRIVE_KI                       0.0
 #define YDRIVE_KD                       0.0
 #define YDRIVE_KF                       0.0
 #define YDRIVE_TOLERANCE                1.0
 #define YDRIVE_SETTLING                 200
 
-#define TURN_KP                         0.012       //0.012[3/2/14]
+#define TURN_KP                         0.012
 #define TURN_KI                         0.0
 #define TURN_KD                         0.0
 #define TURN_KF                         0.0

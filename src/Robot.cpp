@@ -4,67 +4,68 @@
 #include "Commands/Command.h"
 #include <string>
 #include <iostream>
-#include <PIDController.h>
 #include <TrcDefs.h>
+#include <PIDController.h>
 #include <DistanceEncoder.h>
 #include <RobotDriveOutput.h>
 
 #define __PRINT_COMMAND_H__
-#define DRIVE_ENCODER_PPR 2048
+#define DRIVE_ENCODER_PPR 	2048
+#define PI 					3.141592653589793
 
 using namespace std;
 
-// const double PI = 3.14159265359;
+bool elevatorinuse;
+bool elevatorup;
+//bool noodlerinuse;
+//bool noodlerdir;
+
+float driveCoefficient;
+float elevatorCoefficient;
 
 class RobotDemo : public IterativeRobot {
 	// Drive system motor controllers
-
-
     Talon *rightTalon;
     Talon *leftTalon;
-    Talon *noodlerTalon;
-
-
+    // Talon *noodler;
     Victor *elevator;
 
-    bool *elevatorinuse;
-    bool *elevatorup;
-    bool *noodlerinuse;
-    bool *noodlerdir;
-
-
+    // Encoders
     Encoder *rightEncoder;
     Encoder *leftEncoder;
     DistanceEncoder *rightDistance;
     DistanceEncoder *leftDistance;
 
-    Joystick *controllerLeft;
-    Joystick *controllerRight;
+    // Joysticks
+    Joystick *leftController;
+    Joystick *rightController;
 
     RobotDrive *robotDrive;
 
-    // TrcPIDCtrl *pidCtrlDrive;
-    // TrcPIDCtrl *pidCtrlTurn;
+    // PID Controllers
     PIDController *rightPID;
     PIDController *leftPID;
+
+    // Solenoids
+    Solenoid *grabberSolenoid;
 
 public:
     RobotDemo(void) {
     	leftTalon  = new Talon(0);
   		rightTalon = new Talon(1);
-  		noodlerTalon = new Talon(2);
+//  	noodler    = new Talon(2);
+  		elevator   = new Victor(2);
+
   		// pidCtrlDrive = new TrcPIDCtrl(YDRIVE_KP, YDRIVE_KI, YDRIVE_KD, YDRIVE_KF, YDRIVE_TOLERANCE, YDRIVE_SETTLING);
   		// pidCtrlTurn = new TrcPIDCtrl(TURN_KP, TURN_KI, TURN_KD, TURN_KF, TURN_TOLERANCE, TURN_SETTLING);
 
-  		//robot-state booleans
+  		// robot-state booleans
   		elevatorinuse = false;
   		elevatorup = true;
-  		noodlerinuse = false;
-  		noodlerdir=false;
+  	//	noodlerinuse = false;
+  		//noodlerdir=false;
 
   		robotDrive = new RobotDrive(rightTalon, leftTalon);
-  		robotDrive->SetInvertedMotor(RobotDrive::kFrontLeftMotor, true);
-  		robotDrive->SetInvertedMotor(RobotDrive::kRearLeftMotor, true);
 
   		leftEncoder = new Encoder(0, 1, true, Encoder::EncodingType::k4X);
   		rightEncoder = new Encoder(2, 3, true, Encoder::EncodingType::k4X);
@@ -72,17 +73,13 @@ public:
   		leftDistance = new DistanceEncoder(leftEncoder);
   		rightDistance = new DistanceEncoder(rightEncoder);
 
-  		controllerLeft  = new Joystick(0);
-  		controllerRight = new Joystick(1);
+  		leftController  = new Joystick(0);
+  		rightController = new Joystick(1);
 
-  		elevator = new Victor(2);
-  		//elevator_up = false;
-  		rightPID = new PIDController(0.005, 0.0, 0.04, rightDistance, rightTalon);
+  		leftPID =  new PIDController(0.005, 0.006, 0.04, leftDistance, leftTalon);
+  		rightPID = new PIDController(0.005, 0.006, 0.04, rightDistance, rightTalon);
 
-
-  		leftPID =  new PIDController(0.005, 0.0, 0.04, leftDistance, leftTalon);
-  		rightPID = new PIDController(0.005, 0.0, 0.04, rightDistance, rightTalon);
-
+  		grabberSolenoid = new Solenoid(0);
     }
 
   	/********************************** Init Routines *************************************/
@@ -117,55 +114,57 @@ public:
   	void DisabledPeriodic(void) {}
 
   	void AutonomousPeriodic(void) {
-  		cout << "Right error: " << rightPID->GetError() << " Setpoint: " << rightPID->GetSetpoint() << endl;
-  		cout << "Left error: " << leftPID->GetError() << " Setpoint: " << leftPID->GetSetpoint() << endl;
+  		cout << "Right error: " << rightPID->GetError() << "  Left error: " << leftPID->GetError() << endl;
   	}
 
   	void TeleopPeriodic(void) {
-  		robotDrive->TankDrive(controllerLeft, controllerRight);
+  		driveCoefficient = ((-rightController->GetZ() + 1) / 3.125) + 0.36;
+  		elevatorCoefficient = ((-leftController->GetZ() + 1) / 5) + 0.1;
+  		cout << elevatorCoefficient << endl;
+  		robotDrive->TankDrive(driveCoefficient * rightController->GetY(), driveCoefficient * leftController->GetY());
 
-  		//UNTESTED
-  		//new elevator code so that later we can add PID control loops to it, also toggle-able code, probably not the best way to do this...
-  		if (controllerRight->GetTrigger()) {
+  		// Elevator code so that later we can add PID control loops to it
+  		if (rightController->GetTrigger()) {
   			elevatorinuse = true;
   			elevatorup = true;
-  		}else if(controllerLeft->GetTrigger()){
+  		} else if (leftController->GetTrigger()) {
   			elevatorinuse = true;
   			elevatorup = false;
-  		}else{
+  		} else {
   			elevatorinuse = false;
   		}
 
-  		//toggle buttons for noodler,
-  		if(controllerRight->GetRawButton(4)){
-  			noodlerinuse = -noodlerinuse;
-  			noodlerdir = true;
-  		}else if(controllerLeft->GetRawButton(4)){
-  			noodlerinuse = -noodlerinuse;
-  			noodlerdir = false;
-  		}
+  		// Toggle buttons for noodler
+//  		if(controllerRight->GetRawButton(4)){
+//  			noodlerinuse = -noodlerinuse;
+//  			noodlerdir = true;
+//  		}else if(controllerLeft->GetRawButton(4)){
+//  			noodlerinuse = -noodlerinuse;
+//  			noodlerdir = false;
+//  		}
 
-  		//Utility checkers
-  		//to add another || so that it stops once it reaches a certain point
+  		// Utility checkers
+  		// To add another use an or (||) so that it stops once it reaches a certain point
   		//
-  		if(elevatorinuse){
-  			if(elevatorup){
-  				elevator->SetSpeed(.03);
-  			}else{
-  				elevator->SetSpeed(-.03);
+  		if (elevatorinuse) {
+  			if (elevatorup) {
+  				elevator->SetSpeed(.3);
+  			} else {
+  				elevator->SetSpeed(-.3);
   			}
+  		} else {
+  			elevator->SetSpeed(0);
   		}
 
-  		if(noodlerinuse){
-  			if(noodlerdir){
-  				noodlerTalon->SetSpeed(.3);
-  			}else{
-  				noodlerTalon->SetSpeed(-.3);
-  			}
-
-  		}else{
-  			noodlerTalon->SetSpeed(0);
-  		}
+//  		if (noodlerinuse) {
+//  			if (noodlerdir) {
+//  				noodler->SetSpeed(.3);
+//  			} else {
+//  				noodler->SetSpeed(-.3);
+//  			}
+//  		} else {
+//  			noodler->SetSpeed(0);
+//  		}
 
   		// int32_t rightRate = rightEncoder->GetRate();
   		// int32_t leftRate = leftEncoder->GetRate();

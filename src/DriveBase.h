@@ -5,8 +5,8 @@
 //private:
 //	float yPos;
 //	float rotPos;
-//    float yDistPerRev;
-//    float degPerRev;
+//  float yDistPerRev;
+//  float degPerRev;
 //	TrcPIDCtrl yPidCtrl;
 //	TrcPIDCtrl turnPidCtrl;
 //
@@ -65,18 +65,18 @@
 //	    Event *notifyEvent = NULL,
 //	    uint32_t timeout = 0
 //	) {
-////	    pidDrive->SetTarget(distXSetPoint,
-////	                        distYSetPoint,
-////	                        angleSetPoint,
-////	                        fHoldTarget,
-////	                        notifyEvent,
-////	                        timeout);
+//	    pidDrive->SetTarget(distXSetPoint,
+//	                        distYSetPoint,
+//	                        angleSetPoint,
+//	                        fHoldTarget,
+//	                        notifyEvent,
+//	                        timeout);
 //	    return;
 //	}
 //
 //    // This function stops the drive base.
 //    void Stop(void) {
-////        pidDrive->Stop();
+//        pidDrive->Stop();
 //    }
 //};
 //

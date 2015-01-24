@@ -10,6 +10,8 @@ public:
 	m_baseEncoder = baseEncoder;
   }
 
+  virtual ~DistanceEncoder() {}
+
   double PIDGet() {
 	return m_baseEncoder->GetDistance();
   }

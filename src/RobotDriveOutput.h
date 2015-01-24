@@ -10,7 +10,9 @@ public:
     m_baseDrive = baseDrive;
   }
 
-  void pidWrite(double output) {
+  virtual ~RobotDriveOutput() {}
+
+  void PIDWrite(double output) {
     m_baseDrive->Drive(output, 0.0);
   }
 };
