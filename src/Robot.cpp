@@ -18,10 +18,20 @@ using namespace std;
 
 class RobotDemo : public IterativeRobot {
 	// Drive system motor controllers
+
+
     Talon *rightTalon;
     Talon *leftTalon;
+    Talon *noodlerTalon;
+
 
     Victor *elevator;
+
+    bool *elevatorinuse;
+    bool *elevatorup;
+    bool *noodlerinuse;
+    bool *noodlerdir;
+
 
     Encoder *rightEncoder;
     Encoder *leftEncoder;
@@ -42,9 +52,15 @@ public:
     RobotDemo(void) {
     	leftTalon  = new Talon(0);
   		rightTalon = new Talon(1);
-
+  		noodlerTalon = new Talon(2);
   		// pidCtrlDrive = new TrcPIDCtrl(YDRIVE_KP, YDRIVE_KI, YDRIVE_KD, YDRIVE_KF, YDRIVE_TOLERANCE, YDRIVE_SETTLING);
   		// pidCtrlTurn = new TrcPIDCtrl(TURN_KP, TURN_KI, TURN_KD, TURN_KF, TURN_TOLERANCE, TURN_SETTLING);
+
+  		//robot-state booleans
+  		elevatorinuse = false;
+  		elevatorup = true;
+  		noodlerinuse = false;
+  		noodlerdir=false;
 
   		robotDrive = new RobotDrive(rightTalon, leftTalon);
   		robotDrive->SetInvertedMotor(RobotDrive::kFrontLeftMotor, true);
@@ -60,9 +76,13 @@ public:
   		controllerRight = new Joystick(1);
 
   		elevator = new Victor(2);
-
+  		//elevator_up = false;
   		rightPID = new PIDController(0.005, 0.0, 0.04, rightDistance, rightTalon);
+
+
   		leftPID =  new PIDController(0.005, 0.0, 0.04, leftDistance, leftTalon);
+  		rightPID = new PIDController(0.005, 0.0, 0.04, rightDistance, rightTalon);
+
     }
 
   	/********************************** Init Routines *************************************/
@@ -87,6 +107,7 @@ public:
 
   	void TeleopInit(void) {
   		// Set all motor controllers to be not moving initially.
+  		elevator->SetSpeed(0.0);
   		leftTalon->SetSpeed(0.0);
   		rightTalon->SetSpeed(0.0);
   	}
@@ -103,12 +124,47 @@ public:
   	void TeleopPeriodic(void) {
   		robotDrive->TankDrive(controllerLeft, controllerRight);
 
+  		//UNTESTED
+  		//new elevator code so that later we can add PID control loops to it, also toggle-able code, probably not the best way to do this...
   		if (controllerRight->GetTrigger()) {
-  			elevator->SetSpeed(0.3);
-  		} else if (controllerLeft->GetTrigger()) {
-  			elevator->SetSpeed(-0.3);
-  		} else {
-  			elevator->SetSpeed(0.0);
+  			elevatorinuse = true;
+  			elevatorup = true;
+  		}else if(controllerLeft->GetTrigger()){
+  			elevatorinuse = true;
+  			elevatorup = false;
+  		}else{
+  			elevatorinuse = false;
+  		}
+
+  		//toggle buttons for noodler,
+  		if(controllerRight->GetRawButton(4)){
+  			noodlerinuse = -noodlerinuse;
+  			noodlerdir = true;
+  		}else if(controllerLeft->GetRawButton(4)){
+  			noodlerinuse = -noodlerinuse;
+  			noodlerdir = false;
+  		}
+
+  		//Utility checkers
+  		//to add another || so that it stops once it reaches a certain point
+  		//
+  		if(elevatorinuse){
+  			if(elevatorup){
+  				elevator->SetSpeed(.03);
+  			}else{
+  				elevator->SetSpeed(-.03);
+  			}
+  		}
+
+  		if(noodlerinuse){
+  			if(noodlerdir){
+  				noodlerTalon->SetSpeed(.3);
+  			}else{
+  				noodlerTalon->SetSpeed(-.3);
+  			}
+
+  		}else{
+  			noodlerTalon->SetSpeed(0);
   		}
 
   		// int32_t rightRate = rightEncoder->GetRate();
