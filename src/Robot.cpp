@@ -15,10 +15,14 @@
 
 using namespace std;
 
+
 bool elevatorinuse;
 bool elevatorup;
 //bool noodlerinuse;
 //bool noodlerdir;
+bool driving;
+bool driveRight;
+bool driveLeft;
 
 float driveCoefficient;
 float elevatorCoefficient;
@@ -53,7 +57,7 @@ public:
     RobotDemo(void) {
     	leftTalon  = new Talon(0);
   		rightTalon = new Talon(1);
-//  	noodler    = new Talon(2);
+  		//noodler    = new Talon(2);
   		elevator   = new Victor(2);
 
   		// pidCtrlDrive = new TrcPIDCtrl(YDRIVE_KP, YDRIVE_KI, YDRIVE_KD, YDRIVE_KF, YDRIVE_TOLERANCE, YDRIVE_SETTLING);
@@ -103,6 +107,8 @@ public:
   	}
 
   	void TeleopInit(void) {
+  		rightPID->Enable();
+  		leftPID->Enable();
   		// Set all motor controllers to be not moving initially.
   		elevator->SetSpeed(0.0);
   		leftTalon->SetSpeed(0.0);
@@ -134,6 +140,21 @@ public:
   			elevatorinuse = false;
   		}
 
+
+  		if(rightController->GetRawButton(6)){
+  			driving = true;
+  			driveRight = true;
+  		}else{
+  			driving = false;
+  			driveRight = false;
+  		}
+  		if(leftController->GetRawButton(6)){
+			driving = true;
+			driveLeft = true;
+		}else{
+			driving = false;
+			driveLeft = false;
+		}
   		// Toggle buttons for noodler
 //  		if(controllerRight->GetRawButton(4)){
 //  			noodlerinuse = -noodlerinuse;
@@ -156,6 +177,19 @@ public:
   			elevator->SetSpeed(0);
   		}
 
+  		if(driving){
+  			if(driveLeft){
+  				leftPID->SetSetpoint((leftPID->GetSetpoint()+100) );
+  			}else if (driveRight){
+  				rightPID->SetSetpoint((rightPID->GetSetpoint()+100) );
+  			}else{
+  				rightPID->SetSetpoint((rightPID->GetSetpoint()+100) );
+  				leftPID->SetSetpoint((leftPID->GetSetpoint()+100) );
+  			}
+  		}else{
+
+  		}
+
 //  		if (noodlerinuse) {
 //  			if (noodlerdir) {
 //  				noodler->SetSpeed(.3);
@@ -165,9 +199,9 @@ public:
 //  		} else {
 //  			noodler->SetSpeed(0);
 //  		}
-
   		// int32_t rightRate = rightEncoder->GetRate();
   		// int32_t leftRate = leftEncoder->GetRate();
+
   		int32_t rightDistance = rightEncoder->GetDistance();
   		int32_t leftDistance = leftEncoder->GetDistance();
 
