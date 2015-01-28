@@ -31,7 +31,7 @@ class RobotDemo : public IterativeRobot {
 	// Drive system motor controllers
     Talon *rightTalon;
     Talon *leftTalon;
-    // Talon *noodler;
+    Victor *noodle;
     Victor *elevator;
 
     // Encoders
@@ -55,19 +55,19 @@ class RobotDemo : public IterativeRobot {
 
 public:
     RobotDemo(void) {
-    	leftTalon  = new Talon(0);
-  		rightTalon = new Talon(1);
-  		//noodler    = new Talon(2);
+
   		elevator   = new Victor(2);
 
+  		rightTalon = new Talon(8);
+  		leftTalon  = new Talon(9);
+  		noodle = new Victor(6); //this is the victor slot that they told me it might not be right
   		// pidCtrlDrive = new TrcPIDCtrl(YDRIVE_KP, YDRIVE_KI, YDRIVE_KD, YDRIVE_KF, YDRIVE_TOLERANCE, YDRIVE_SETTLING);
   		// pidCtrlTurn = new TrcPIDCtrl(TURN_KP, TURN_KI, TURN_KD, TURN_KF, TURN_TOLERANCE, TURN_SETTLING);
 
   		// robot-state booleans
   		elevatorinuse = false;
   		elevatorup = true;
-  	//	noodlerinuse = false;
-  		//noodlerdir=false;
+
 
   		robotDrive = new RobotDrive(rightTalon, leftTalon);
 
@@ -155,14 +155,7 @@ public:
 			driving = false;
 			driveLeft = false;
 		}
-  		// Toggle buttons for noodler
-//  		if(controllerRight->GetRawButton(4)){
-//  			noodlerinuse = -noodlerinuse;
-//  			noodlerdir = true;
-//  		}else if(controllerLeft->GetRawButton(4)){
-//  			noodlerinuse = -noodlerinuse;
-//  			noodlerdir = false;
-//  		}
+
 
   		// Utility checkers
   		// To add another use an or (||) so that it stops once it reaches a certain point
@@ -190,15 +183,6 @@ public:
 
   		}
 
-//  		if (noodlerinuse) {
-//  			if (noodlerdir) {
-//  				noodler->SetSpeed(.3);
-//  			} else {
-//  				noodler->SetSpeed(-.3);
-//  			}
-//  		} else {
-//  			noodler->SetSpeed(0);
-//  		}
   		// int32_t rightRate = rightEncoder->GetRate();
   		// int32_t leftRate = leftEncoder->GetRate();
 
@@ -208,6 +192,13 @@ public:
   		cout << "Right: " << rightDistance << endl;
   		cout << "Left: " << leftDistance << endl;
 		cout << endl;
+		if (rightController->GetRawButton(4)){
+			noodle -> SetSpeed(1.0);
+		}
+		else if(leftController -> GetRawButton(4)){
+			noodle -> SetSpeed(-1.0);
+
+		}
   	}
 
   	void DisabledContinuous(void) {}
