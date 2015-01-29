@@ -37,12 +37,14 @@ class RobotDemo : public IterativeRobot {
     // Encoders
     Encoder *rightEncoder;
     Encoder *leftEncoder;
+    Encoder *elevatorEncoder;
     DistanceEncoder *rightDistance;
     DistanceEncoder *leftDistance;
 
     // Joysticks
     Joystick *leftController;
     Joystick *rightController;
+    Joystick *elevatorController;
 
     RobotDrive *robotDrive;
 
@@ -51,7 +53,14 @@ class RobotDemo : public IterativeRobot {
     PIDController *leftPID;
 
     // Solenoids
-    Solenoid *grabberSolenoid;
+    DoubleSolenoid *leftGrabberSolenoid;
+    DoubleSolenoid *rightGrabberSolenoid;
+
+    // DigitalInput Line Sensor
+    // Black: DIO signal (0)
+    // White: DIo Signal (1)
+    // Blue: 10-16V supply (PD Board)
+    // Brown: Ground
 
 public:
     RobotDemo(void) {
@@ -66,24 +75,27 @@ public:
   		// robot-state booleans
   		elevatorinuse = false;
   		elevatorup = true;
-  	//	noodlerinuse = false;
-  		//noodlerdir=false;
+  		//noodlerinuse = false;
+  		//noodlerdir = false;
 
   		robotDrive = new RobotDrive(rightTalon, leftTalon);
 
   		leftEncoder = new Encoder(0, 1, true, Encoder::EncodingType::k4X);
   		rightEncoder = new Encoder(2, 3, true, Encoder::EncodingType::k4X);
+  		elevatorEncoder = new Encoder(4, 5, true, Encoder::EncodingType::k4X);
 
   		leftDistance = new DistanceEncoder(leftEncoder);
   		rightDistance = new DistanceEncoder(rightEncoder);
 
-  		leftController  = new Joystick(0);
-  		rightController = new Joystick(1);
+  		leftController     = new Joystick(0);
+  		rightController    = new Joystick(1);
+  		elevatorController = new Joystick(2);
 
-  		leftPID =  new PIDController(0.005, 0.006, 0.04, leftDistance, leftTalon);
-  		rightPID = new PIDController(0.005, 0.006, 0.04, rightDistance, rightTalon);
+  		leftPID =  new PIDController(0.008, 0.001, 0.006, leftDistance, leftTalon);
+  		rightPID = new PIDController(0.008, 0.001, 0.006, rightDistance, rightTalon);
 
-  		grabberSolenoid = new Solenoid(0);
+  		leftGrabberSolenoid = new DoubleSolenoid(0, 1);
+  		rightGrabberSolenoid = new DoubleSolenoid(2, 3);
     }
 
   	/********************************** Init Routines *************************************/
@@ -91,6 +103,7 @@ public:
   	void RobotInit(void) {
   		rightEncoder->SetDistancePerPulse(PI*4/360.0);
   		leftEncoder->SetDistancePerPulse(PI*4/360.0);
+  		elevatorEncoder->SetDistancePerPulse(PI*4/360.0); // Needs to be updated with the radius of the elevator coil.
   	}
 
   	void DisabledInit(void) {
@@ -102,13 +115,16 @@ public:
   		rightPID->Enable();
   		leftPID->Enable();
 
+  		rightPID->SetAbsoluteTolerance(20.0);
+  		leftPID->SetAbsoluteTolerance(20.0);
+
   		rightPID->SetSetpoint(2000);
   		leftPID->SetSetpoint(2000);
   	}
 
   	void TeleopInit(void) {
-  		rightPID->Enable();
-  		leftPID->Enable();
+  		//rightPID->Enable();
+  		//leftPID->Enable();
   		// Set all motor controllers to be not moving initially.
   		elevator->SetSpeed(0.0);
   		leftTalon->SetSpeed(0.0);
@@ -126,35 +142,33 @@ public:
   	void TeleopPeriodic(void) {
   		driveCoefficient = ((-rightController->GetZ() + 1) / 3.125) + 0.36;
   		elevatorCoefficient = ((-leftController->GetZ() + 1) / 5) + 0.1;
-  		cout << elevatorCoefficient << endl;
+//  		cout << elevatorCoefficient << endl;
   		robotDrive->TankDrive(driveCoefficient * rightController->GetY(), driveCoefficient * leftController->GetY());
 
   		// Elevator code so that later we can add PID control loops to it
-  		if (rightController->GetTrigger()) {
-  			elevatorinuse = true;
-  			elevatorup = true;
-  		} else if (leftController->GetTrigger()) {
+  		if (elevatorController->GetRawButton(6)) {
   			elevatorinuse = true;
   			elevatorup = false;
+  		} else if (elevatorController->GetRawButton(5)) {
+  			elevatorinuse = true;
+  			elevatorup = true;
   		} else {
   			elevatorinuse = false;
   		}
+//
+//  		if(rightController->GetRawButton(6)||leftController->GetRawButton(6)){
+//  			driving = true;
+//  			if(rightController->GetRawButton(6)){
+//  				driveRight = true;
+//  			}else{
+//  				driveLeft = true;
+//  			}
+//  		}else{
+//  			driving = false;
+//  			driveLeft = false;
+//  			driveRight = false;
+//  		}
 
-
-  		if(rightController->GetRawButton(6)){
-  			driving = true;
-  			driveRight = true;
-  		}else{
-  			driving = false;
-  			driveRight = false;
-  		}
-  		if(leftController->GetRawButton(6)){
-			driving = true;
-			driveLeft = true;
-		}else{
-			driving = false;
-			driveLeft = false;
-		}
   		// Toggle buttons for noodler
 //  		if(controllerRight->GetRawButton(4)){
 //  			noodlerinuse = -noodlerinuse;
@@ -177,18 +191,25 @@ public:
   			elevator->SetSpeed(0);
   		}
 
-  		if(driving){
-  			if(driveLeft){
-  				leftPID->SetSetpoint((leftPID->GetSetpoint()+100) );
-  			}else if (driveRight){
-  				rightPID->SetSetpoint((rightPID->GetSetpoint()+100) );
-  			}else{
-  				rightPID->SetSetpoint((rightPID->GetSetpoint()+100) );
-  				leftPID->SetSetpoint((leftPID->GetSetpoint()+100) );
-  			}
-  		}else{
-
-  		}
+//  		if(driving) {
+//  			rightPID->Enable();
+//  			leftPID->Enable();
+//
+//  	  		rightPID->SetAbsoluteTolerance(20.0);
+//  	  		leftPID->SetAbsoluteTolerance(20.0);
+//
+//  			if(driveLeft) {
+//  				leftPID->SetSetpoint((leftPID->GetSetpoint()+1000));
+//  			} else if (driveRight) {
+//  				rightPID->SetSetpoint((rightPID->GetSetpoint()+1000));
+//  			} else {
+//  				//rightPID->SetSetpoint((rightPID->GetSetpoint()+100));
+//  				//leftPID->SetSetpoint((leftPID->GetSetpoint()+100));
+//  			}
+//  		} else {
+//  			rightPID->Disable();
+//  			leftPID->Disable();
+//  		}
 
 //  		if (noodlerinuse) {
 //  			if (noodlerdir) {
@@ -202,12 +223,16 @@ public:
   		// int32_t rightRate = rightEncoder->GetRate();
   		// int32_t leftRate = leftEncoder->GetRate();
 
-  		int32_t rightDistance = rightEncoder->GetDistance();
-  		int32_t leftDistance = leftEncoder->GetDistance();
+  		//int32_t rightDistance = rightEncoder->GetDistance();
+  		//int32_t leftDistance = leftEncoder->GetDistance();
 
-  		cout << "Right: " << rightDistance << endl;
-  		cout << "Left: " << leftDistance << endl;
-		cout << endl;
+  		//cout << "Right: " << rightDistance << endl;
+  		//cout << "Left: " << leftDistance << endl;
+		//cout << endl;
+
+  		int32_t elevatorDistance = elevatorEncoder->GetDistance();
+  		cout << "Right error: " << rightPID->GetError() << "  Left error: " << leftPID->GetError() << endl;
+  		cout << elevatorDistance << endl;
   	}
 
   	void DisabledContinuous(void) {}
