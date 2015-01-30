@@ -11,18 +11,18 @@
 
 #define __PRINT_COMMAND_H__
 #define DRIVE_ENCODER_PPR 	2048
-#define PI 					3.141592653589793
 
 using namespace std;
 
-
 bool elevatorinuse;
 bool elevatorup;
-//bool noodlerinuse;
-//bool noodlerdir;
-bool driving;
+bool noodlerinuse;
+bool noodlerdir;
 bool driveRight;
 bool driveLeft;
+
+// Flags
+bool pidButtonFlag = true;
 
 float driveCoefficient;
 float elevatorCoefficient;
@@ -31,7 +31,7 @@ class RobotDemo : public IterativeRobot {
 	// Drive system motor controllers
     Talon *rightTalon;
     Talon *leftTalon;
-    // Talon *noodler;
+    Talon *noodler;
     Victor *elevator;
 
     // Encoders
@@ -66,17 +66,14 @@ public:
     RobotDemo(void) {
     	leftTalon  = new Talon(0);
   		rightTalon = new Talon(1);
-  		//noodler    = new Talon(2);
+  		noodler    = new Talon(2);
   		elevator   = new Victor(2);
-
-  		// pidCtrlDrive = new TrcPIDCtrl(YDRIVE_KP, YDRIVE_KI, YDRIVE_KD, YDRIVE_KF, YDRIVE_TOLERANCE, YDRIVE_SETTLING);
-  		// pidCtrlTurn = new TrcPIDCtrl(TURN_KP, TURN_KI, TURN_KD, TURN_KF, TURN_TOLERANCE, TURN_SETTLING);
 
   		// robot-state booleans
   		elevatorinuse = false;
   		elevatorup = true;
-  		//noodlerinuse = false;
-  		//noodlerdir = false;
+  		noodlerinuse = false;
+  		noodlerdir = false;
 
   		robotDrive = new RobotDrive(rightTalon, leftTalon);
 
@@ -125,6 +122,7 @@ public:
   	void TeleopInit(void) {
   		//rightPID->Enable();
   		//leftPID->Enable();
+
   		// Set all motor controllers to be not moving initially.
   		elevator->SetSpeed(0.0);
   		leftTalon->SetSpeed(0.0);
@@ -142,7 +140,6 @@ public:
   	void TeleopPeriodic(void) {
   		driveCoefficient = ((-rightController->GetZ() + 1) / 3.125) + 0.36;
   		elevatorCoefficient = ((-leftController->GetZ() + 1) / 5) + 0.1;
-//  		cout << elevatorCoefficient << endl;
   		robotDrive->TankDrive(driveCoefficient * rightController->GetY(), driveCoefficient * leftController->GetY());
 
   		// Elevator code so that later we can add PID control loops to it
@@ -155,32 +152,39 @@ public:
   		} else {
   			elevatorinuse = false;
   		}
-//
-//  		if(rightController->GetRawButton(6)||leftController->GetRawButton(6)){
-//  			driving = true;
-//  			if(rightController->GetRawButton(6)){
-//  				driveRight = true;
-//  			}else{
-//  				driveLeft = true;
-//  			}
-//  		}else{
-//  			driving = false;
-//  			driveLeft = false;
-//  			driveRight = false;
-//  		}
+
+  		// PID Test Driving
+  		if (pidButtonFlag && (elevatorController->GetRawButton(2) || elevatorController->GetRawButton(4))) {
+  			float pidMovement = (elevatorController->GetRawButton(2) ? -100.0 : 100.0);
+
+  			leftPID->Enable();
+  			rightPID->Enable();
+
+  			leftPID->SetSetpoint(leftPID->GetSetpoint() + pidMovement);
+  			rightPID->SetSetpoint(rightPID->GetSetpoint() + pidMovement);
+
+  			while ((rightPID->GetError() > 1.0) && (leftPID->GetError() > 1.0)) {
+  				cout << "DRIVING -- Right error: " << rightPID->GetError() << "  Left error: " << leftPID->GetError() << endl;
+  			}
+
+  			pidButtonFlag = false;
+  		} else if (!(elevatorController->GetRawButton(2) || elevatorController->GetRawButton(4))) {
+  			pidButtonFlag = true;
+  		}
 
   		// Toggle buttons for noodler
-//  		if(controllerRight->GetRawButton(4)){
-//  			noodlerinuse = -noodlerinuse;
-//  			noodlerdir = true;
-//  		}else if(controllerLeft->GetRawButton(4)){
-//  			noodlerinuse = -noodlerinuse;
-//  			noodlerdir = false;
-//  		}
+  		if(rightController->GetRawButton(4)) {
+  			noodlerinuse = true;
+  			noodlerdir = true;
+  		} else if(leftController->GetRawButton(4)) {
+  			noodlerinuse = true;
+  			noodlerdir = false;
+  		} else {
+  			noodlerinuse = false;
+  		}
 
   		// Utility checkers
   		// To add another use an or (||) so that it stops once it reaches a certain point
-  		//
   		if (elevatorinuse) {
   			if (elevatorup) {
   				elevator->SetSpeed(.3);
@@ -211,15 +215,16 @@ public:
 //  			leftPID->Disable();
 //  		}
 
-//  		if (noodlerinuse) {
-//  			if (noodlerdir) {
-//  				noodler->SetSpeed(.3);
-//  			} else {
-//  				noodler->SetSpeed(-.3);
-//  			}
-//  		} else {
-//  			noodler->SetSpeed(0);
-//  		}
+  		if (noodlerinuse) {
+  			if (noodlerdir) {
+  				noodler->SetSpeed(.3);
+  			} else {
+  				noodler->SetSpeed(-.3);
+  			}
+  		} else {
+  			noodler->SetSpeed(0);
+  		}
+
   		// int32_t rightRate = rightEncoder->GetRate();
   		// int32_t leftRate = leftEncoder->GetRate();
 
@@ -230,9 +235,7 @@ public:
   		//cout << "Left: " << leftDistance << endl;
 		//cout << endl;
 
-  		int32_t elevatorDistance = elevatorEncoder->GetDistance();
   		cout << "Right error: " << rightPID->GetError() << "  Left error: " << leftPID->GetError() << endl;
-  		cout << elevatorDistance << endl;
   	}
 
   	void DisabledContinuous(void) {}
