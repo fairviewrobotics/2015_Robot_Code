@@ -14,16 +14,16 @@
 
 using namespace std;
 
-bool elevatorinuse;
-bool elevatorup;
-bool noodlerinuse;
-bool noodlerdir;
-bool driveRight;
-bool driveLeft;
+// Robot-state booleans
+bool elevatorinuse = false;
+bool elevatorup = true;
+bool noodlerinuse = false;
+bool noodlerdir = false;
 
 // Flags
 bool pidButtonFlag = true;
 
+// Speed coefficients for the drive train and elevator control
 float driveCoefficient;
 float elevatorCoefficient;
 
@@ -31,8 +31,8 @@ class RobotDemo : public IterativeRobot {
 	// Drive system motor controllers
     Talon *rightTalon;
     Talon *leftTalon;
-    Talon *noodler;
     Victor *elevator;
+    Victor *noodler;
 
     // Encoders
     Encoder *rightEncoder;
@@ -66,14 +66,8 @@ public:
     RobotDemo(void) {
     	leftTalon  = new Talon(0);
   		rightTalon = new Talon(1);
-  		noodler    = new Talon(2);
   		elevator   = new Victor(2);
-
-  		// robot-state booleans
-  		elevatorinuse = false;
-  		elevatorup = true;
-  		noodlerinuse = false;
-  		noodlerdir = false;
+  		noodler    = new Victor(6);
 
   		robotDrive = new RobotDrive(rightTalon, leftTalon);
 
@@ -84,9 +78,9 @@ public:
   		leftDistance = new DistanceEncoder(leftEncoder);
   		rightDistance = new DistanceEncoder(rightEncoder);
 
-  		leftController     = new Joystick(0);
-  		rightController    = new Joystick(1);
-  		elevatorController = new Joystick(2);
+  		leftController     = new Joystick(0); // Logitech Attack 3
+  		rightController    = new Joystick(1); // Logitech Attack 3
+  		elevatorController = new Joystick(2); // Logitech Gamepad
 
   		leftPID =  new PIDController(0.008, 0.001, 0.006, leftDistance, leftTalon);
   		rightPID = new PIDController(0.008, 0.001, 0.006, rightDistance, rightTalon);
@@ -138,20 +132,10 @@ public:
   	}
 
   	void TeleopPeriodic(void) {
+  		// Initial Stuff
   		driveCoefficient = ((-rightController->GetZ() + 1) / 3.125) + 0.36;
   		elevatorCoefficient = ((-leftController->GetZ() + 1) / 5) + 0.1;
   		robotDrive->TankDrive(driveCoefficient * rightController->GetY(), driveCoefficient * leftController->GetY());
-
-  		// Elevator code so that later we can add PID control loops to it
-  		if (elevatorController->GetRawButton(6)) {
-  			elevatorinuse = true;
-  			elevatorup = false;
-  		} else if (elevatorController->GetRawButton(5)) {
-  			elevatorinuse = true;
-  			elevatorup = true;
-  		} else {
-  			elevatorinuse = false;
-  		}
 
   		// PID Test Driving
   		if (pidButtonFlag && (elevatorController->GetRawButton(2) || elevatorController->GetRawButton(4))) {
@@ -172,7 +156,17 @@ public:
   			pidButtonFlag = true;
   		}
 
-  		// Toggle buttons for noodler
+  		// Elevator code so that later we can add PID control loops to it
+		if (elevatorController->GetRawButton(6)) {
+			elevatorinuse = true;
+			elevatorup = false;
+		} else if (elevatorController->GetRawButton(5)) {
+			elevatorinuse = true;
+			elevatorup = true;
+		} else {
+			elevatorinuse = false;
+		}
+
   		if(rightController->GetRawButton(4)) {
   			noodlerinuse = true;
   			noodlerdir = true;
@@ -183,7 +177,7 @@ public:
   			noodlerinuse = false;
   		}
 
-  		// Utility checkers
+  		// Utility Activation
   		// To add another use an or (||) so that it stops once it reaches a certain point
   		if (elevatorinuse) {
   			if (elevatorup) {
@@ -195,46 +189,29 @@ public:
   			elevator->SetSpeed(0);
   		}
 
-//  		if(driving) {
-//  			rightPID->Enable();
-//  			leftPID->Enable();
-//
-//  	  		rightPID->SetAbsoluteTolerance(20.0);
-//  	  		leftPID->SetAbsoluteTolerance(20.0);
-//
-//  			if(driveLeft) {
-//  				leftPID->SetSetpoint((leftPID->GetSetpoint()+1000));
-//  			} else if (driveRight) {
-//  				rightPID->SetSetpoint((rightPID->GetSetpoint()+1000));
-//  			} else {
-//  				//rightPID->SetSetpoint((rightPID->GetSetpoint()+100));
-//  				//leftPID->SetSetpoint((leftPID->GetSetpoint()+100));
-//  			}
-//  		} else {
-//  			rightPID->Disable();
-//  			leftPID->Disable();
-//  		}
+  		// Grabber Solenoids
+  		if (elevatorController->GetRawButton(7)) {
+  			rightGrabberSolenoid->Set(DoubleSolenoid::kForward);
+  			leftGrabberSolenoid->Set(DoubleSolenoid::kForward);
+  		} else if(elevatorController->GetRawButton(8)) {
+  			rightGrabberSolenoid->Set(DoubleSolenoid::kReverse);
+  			leftGrabberSolenoid->Set(DoubleSolenoid::kReverse);
+  		} else {
+  			rightGrabberSolenoid->Set(DoubleSolenoid::kOff);
+  			leftGrabberSolenoid->Set(DoubleSolenoid::kOff);
+  		}
 
   		if (noodlerinuse) {
   			if (noodlerdir) {
-  				noodler->SetSpeed(.3);
+  				noodler->SetSpeed(.8);
   			} else {
-  				noodler->SetSpeed(-.3);
+  				noodler->SetSpeed(-.8);
   			}
   		} else {
   			noodler->SetSpeed(0);
   		}
 
-  		// int32_t rightRate = rightEncoder->GetRate();
-  		// int32_t leftRate = leftEncoder->GetRate();
-
-  		//int32_t rightDistance = rightEncoder->GetDistance();
-  		//int32_t leftDistance = leftEncoder->GetDistance();
-
-  		//cout << "Right: " << rightDistance << endl;
-  		//cout << "Left: " << leftDistance << endl;
-		//cout << endl;
-
+  		// Debugging Stuff
   		cout << "Right error: " << rightPID->GetError() << "  Left error: " << leftPID->GetError() << endl;
   	}
 
