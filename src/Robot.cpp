@@ -32,6 +32,8 @@ class RobotDemo : public IterativeRobot {
     Talon *rightTalon;
     Talon *leftTalon;
     Victor *elevator;
+    Victor *leftGrabber;
+    Victor *rightGrabber;
     Victor *noodler;
 
     // Encoders
@@ -64,10 +66,12 @@ class RobotDemo : public IterativeRobot {
 
 public:
     RobotDemo(void) {
-    	leftTalon  = new Talon(0);
-  		rightTalon = new Talon(1);
-  		elevator   = new Victor(2);
-  		noodler    = new Victor(6);
+    	leftTalon    = new Talon(0);
+  		rightTalon   = new Talon(1);
+  		elevator     = new Victor(2);
+  		leftGrabber  = new Victor(3);
+  		rightGrabber = new Victor(4);
+  		noodler      = new Victor(6);
 
   		robotDrive = new RobotDrive(rightTalon, leftTalon);
 
@@ -82,8 +86,8 @@ public:
   		rightController    = new Joystick(1); // Logitech Attack 3
   		elevatorController = new Joystick(2); // Logitech Gamepad
 
-  		leftPID =  new PIDController(0.008, 0.001, 0.006, leftDistance, leftTalon);
-  		rightPID = new PIDController(0.008, 0.001, 0.006, rightDistance, rightTalon);
+  		leftPID =  new PIDController(0.0085, 0.0, 0.006, leftDistance, leftTalon);
+  		rightPID = new PIDController(0.0085, 0.0, 0.006, rightDistance, rightTalon);
 
   		leftGrabberSolenoid = new DoubleSolenoid(0, 1);
   		rightGrabberSolenoid = new DoubleSolenoid(2, 3);
@@ -139,7 +143,7 @@ public:
 
   		// PID Test Driving
   		if (pidButtonFlag && (elevatorController->GetRawButton(2) || elevatorController->GetRawButton(4))) {
-  			float pidMovement = (elevatorController->GetRawButton(2) ? -100.0 : 100.0);
+  			float pidMovement = (elevatorController->GetRawButton(2) ? -2000.0 : 2000.0);
 
   			leftPID->Enable();
   			rightPID->Enable();
@@ -151,9 +155,23 @@ public:
   				cout << "DRIVING -- Right error: " << rightPID->GetError() << "  Left error: " << leftPID->GetError() << endl;
   			}
 
+  			leftPID->Disable();
+  			rightPID->Disable();
+
   			pidButtonFlag = false;
   		} else if (!(elevatorController->GetRawButton(2) || elevatorController->GetRawButton(4))) {
   			pidButtonFlag = true;
+  		}
+
+  		if (elevatorController->GetRawButton(9)) {
+  			leftGrabber->SetSpeed(1.0); // + is outwards, - in inwards
+  			rightGrabber->SetSpeed(1.0);
+  		} else if (elevatorController->GetRawButton(10)) {
+			leftGrabber->SetSpeed(-1.0); // + is outwards, - in inwards
+			rightGrabber->SetSpeed(-1.0);
+		} else {
+  			leftGrabber->SetSpeed(0.0);
+  			rightGrabber->SetSpeed(0.0);
   		}
 
   		// Elevator code so that later we can add PID control loops to it
@@ -200,6 +218,8 @@ public:
   			rightGrabberSolenoid->Set(DoubleSolenoid::kOff);
   			leftGrabberSolenoid->Set(DoubleSolenoid::kOff);
   		}
+
+
 
   		if (noodlerinuse) {
   			if (noodlerdir) {
