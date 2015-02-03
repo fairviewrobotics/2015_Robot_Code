@@ -12,6 +12,20 @@
 #define __PRINT_COMMAND_H__
 #define DRIVE_ENCODER_PPR 	2048
 
+
+//
+//Joystick Mapping
+//
+
+#define PID_TEST_FORWARD		9
+#define PID_TEST_BACKWARD		10
+#define ELEVATOR_DOWN			5
+#define ELEVATOR_UP				6
+#define CLAW_IN					7
+#define CLAW_OUT				8
+#define NOODLER_IN				1
+#define NOODLER_OUT				2
+
 using namespace std;
 
 // Robot-state booleans
@@ -139,11 +153,11 @@ public:
   		// Initial Stuff
   		driveCoefficient = ((-rightController->GetZ() + 1) / 3.125) + 0.36;
   		elevatorCoefficient = ((-leftController->GetZ() + 1) / 5) + 0.1;
-  		robotDrive->TankDrive(driveCoefficient * rightController->GetY(), driveCoefficient * leftController->GetY());
+  		robotDrive->TankDrive(driveCoefficient * rightController->GetY(), -driveCoefficient * leftController->GetY());
 
   		// PID Test Driving
-  		if (pidButtonFlag && (elevatorController->GetRawButton(2) || elevatorController->GetRawButton(4))) {
-  			float pidMovement = (elevatorController->GetRawButton(2) ? -2000.0 : 2000.0);
+  		if (pidButtonFlag && (elevatorController->GetRawButton(PID_TEST_BACKWARD) || elevatorController->GetRawButton(PID_TEST_FORWARD))) {
+  			float pidMovement = (elevatorController->GetRawButton(PID_TEST_BACKWARD) ? -2000.0 : 2000.0);
 
   			leftPID->Enable();
   			rightPID->Enable();
@@ -159,36 +173,37 @@ public:
   			rightPID->Disable();
 
   			pidButtonFlag = false;
-  		} else if (!(elevatorController->GetRawButton(2) || elevatorController->GetRawButton(4))) {
+  		} else if (!(elevatorController->GetRawButton(PID_TEST_BACKWARD) || elevatorController->GetRawButton(PID_TEST_FORWARD))) {
   			pidButtonFlag = true;
   		}
 
-  		if (elevatorController->GetRawButton(9)) {
-  			leftGrabber->SetSpeed(1.0); // + is outwards, - in inwards
-  			rightGrabber->SetSpeed(1.0);
-  		} else if (elevatorController->GetRawButton(10)) {
-			leftGrabber->SetSpeed(-1.0); // + is outwards, - in inwards
-			rightGrabber->SetSpeed(-1.0);
-		} else {
-  			leftGrabber->SetSpeed(0.0);
-  			rightGrabber->SetSpeed(0.0);
-  		}
+//  		if (elevatorController->GetRawAxis(1)) { // axis 1 & 3
+//  			elevatorController
+//  			leftGrabber->SetSpeed(1.0); // + is outwards, - in inwards
+//  			rightGrabber->SetSpeed(1.0);
+//  		} else if (elevatorController->GetRawButton(10)) {
+//			leftGrabber->SetSpeed(-1.0); // + is outwards, - in inwards
+//			rightGrabber->SetSpeed(-1.0);
+//		} else {
+  			leftGrabber->SetSpeed(elevatorController->GetRawAxis(1)*4);
+  			rightGrabber->SetSpeed(elevatorController->GetRawAxis(3)*4);
+//  		}
 
   		// Elevator code so that later we can add PID control loops to it
-		if (elevatorController->GetRawButton(6)) {
+		if (elevatorController->GetRawButton(ELEVATOR_DOWN)) {
 			elevatorinuse = true;
 			elevatorup = false;
-		} else if (elevatorController->GetRawButton(5)) {
+		} else if (elevatorController->GetRawButton(ELEVATOR_UP)) {
 			elevatorinuse = true;
 			elevatorup = true;
 		} else {
 			elevatorinuse = false;
 		}
 
-  		if(rightController->GetRawButton(4)) {
+  		if(elevatorController->GetRawButton(NOODLER_IN)) {
   			noodlerinuse = true;
   			noodlerdir = true;
-  		} else if(leftController->GetRawButton(4)) {
+  		} else if(elevatorController->GetRawButton(NOODLER_OUT)) {
   			noodlerinuse = true;
   			noodlerdir = false;
   		} else {
@@ -199,19 +214,19 @@ public:
   		// To add another use an or (||) so that it stops once it reaches a certain point
   		if (elevatorinuse) {
   			if (elevatorup) {
-  				elevator->SetSpeed(.3);
+  				elevator->SetSpeed(1);
   			} else {
-  				elevator->SetSpeed(-.3);
+  				elevator->SetSpeed(1);
   			}
   		} else {
   			elevator->SetSpeed(0);
   		}
 
   		// Grabber Solenoids
-  		if (elevatorController->GetRawButton(7)) {
+  		if (elevatorController->GetRawButton(CLAW_IN)) {
   			rightGrabberSolenoid->Set(DoubleSolenoid::kForward);
   			leftGrabberSolenoid->Set(DoubleSolenoid::kForward);
-  		} else if(elevatorController->GetRawButton(8)) {
+  		} else if(elevatorController->GetRawButton(CLAW_OUT)) {
   			rightGrabberSolenoid->Set(DoubleSolenoid::kReverse);
   			leftGrabberSolenoid->Set(DoubleSolenoid::kReverse);
   		} else {
@@ -221,7 +236,8 @@ public:
 
 
 
-  		if (noodlerinuse) {
+  		if (noodlerinuse||(rightController->GetY()<0&&leftController->GetY()<0)) {
+
   			if (noodlerdir) {
   				noodler->SetSpeed(.8);
   			} else {
