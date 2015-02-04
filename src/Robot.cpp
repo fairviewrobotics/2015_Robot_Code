@@ -26,6 +26,9 @@
 #define NOODLER_IN				1
 #define NOODLER_OUT				2
 
+#define JOYSTICK_DEAD_PERCENTAGE	.1
+#define PID_TEST_TURN_VALUE		90
+
 //
 //Other Constants
 //
@@ -156,10 +159,15 @@ public:
   	}
 
   	void TeleopPeriodic(void) {
+
+  		//Get From Robot
+
   		// Initial Stuff
   		driveCoefficient = ((-rightController->GetZ() + 1) / 3.125) + 0.36;
   		elevatorCoefficient = ((-leftController->GetZ() + 1) / 5) + 0.1;
-  		robotDrive->TankDrive(driveCoefficient * rightController->GetY(), -driveCoefficient * leftController->GetY());
+
+
+
 
 
   		// Elevator code so that later we can add PID control loops to it
@@ -183,7 +191,20 @@ public:
   			noodlerinuse = false;
   		}
 
-  		// Utility Activation
+  		// To Robot Activation
+
+  		float rightdrivestickvalue = 0;
+  		float leftdrivestickvalue = 0;
+
+  		if(rightController->GetY()>JOYSTICK_DEAD_PERCENTAGE){
+  			float rightdrivestickvalue = rightController->GetY();
+  		}
+  		if(leftController->GetY()>JOYSTICK_DEAD_PERCENTAGE){
+  			float leftdrivestickvalue = leftController->GetY();
+  		}
+
+  		robotDrive->TankDrive(driveCoefficient * rightdrivestickvalue, -driveCoefficient * leftController->GetY());
+
   		// To add another use an or (||) so that it stops once it reaches a certain point
   		if (elevatorinuse) {
   			if (elevatorup) {
@@ -249,27 +270,28 @@ public:
 //  		  		}
 //
   		 //PID Turn TO Test
-  		  		if (pidButtonFlag && (utilityController->GetRawButton(PID_TEST_BACKWARD) || utilityController->GetRawButton(PID_TEST_FORWARD))) {
-  		  			float turnto = 90;
-  		  			float pidMovement = (utilityController->GetRawButton(PID_TEST_BACKWARD) ?  AngleToSetpoint(turnto): -AngleToSetpoint(turnto));
 
-  		  			leftPID->Enable();
-  		  			rightPID->Enable();
+			if (pidButtonFlag && (utilityController->GetRawButton(PID_TEST_BACKWARD) || utilityController->GetRawButton(PID_TEST_FORWARD))) {
 
-  		  			leftPID->SetSetpoint(leftPID->GetSetpoint() + pidMovement);
-  		  			rightPID->SetSetpoint(rightPID->GetSetpoint() - pidMovement);
+				float pidMovement = (utilityController->GetRawButton(PID_TEST_BACKWARD) ?  AngleToSetpoint(PID_TEST_TURN_VALUE): -AngleToSetpoint(PID_TEST_TURN_VALUE));
 
-  		  			while ((rightPID->GetError() > 1.0) && (leftPID->GetError() > 1.0)) {
-  		  				cout << "DRIVING -- Right error: " << rightPID->GetError() << "  Left error: " << leftPID->GetError() << endl;
-  		  			}
+				leftPID->Enable();
+				rightPID->Enable();
 
-  		  			leftPID->Disable();
-  		  			rightPID->Disable();
+				leftPID->SetSetpoint(leftPID->GetSetpoint() + pidMovement);
+				rightPID->SetSetpoint(rightPID->GetSetpoint() - pidMovement);
 
-  		  			pidButtonFlag = false;
-  		  		} else if (!(utilityController->GetRawButton(PID_TEST_BACKWARD) || utilityController->GetRawButton(PID_TEST_FORWARD))) {
-  		  			pidButtonFlag = true;
-  		  		}
+				while ((rightPID->GetError() > 1.0) && (leftPID->GetError() > 1.0)) {
+					cout << "DRIVING -- Right error: " << rightPID->GetError() << "  Left error: " << leftPID->GetError() << endl;
+				}
+
+				leftPID->Disable();
+				rightPID->Disable();
+
+				pidButtonFlag = false;
+			} else if (!(utilityController->GetRawButton(PID_TEST_BACKWARD) || utilityController->GetRawButton(PID_TEST_FORWARD))) {
+				pidButtonFlag = true;
+			}
 
 
   		cout << "Right error: " << rightPID->GetError() << "  Left error: " << leftPID->GetError() << endl;
