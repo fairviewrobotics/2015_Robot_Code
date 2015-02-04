@@ -203,7 +203,7 @@ public:
   			float leftdrivestickvalue = leftController->GetY();
   		}
 
-  		robotDrive->TankDrive(driveCoefficient * rightdrivestickvalue, -driveCoefficient * leftController->GetY());
+  		robotDrive->TankDrive(driveCoefficient * rightdrivestickvalue, -driveCoefficient * leftdrivestickvalue);
 
   		// To add another use an or (||) so that it stops once it reaches a certain point
   		if (elevatorinuse) {
