@@ -26,6 +26,12 @@
 #define NOODLER_IN				1
 #define NOODLER_OUT				2
 
+//
+//Other Constants
+//
+#define DIAMETER_TURN			23.5
+
+
 using namespace std;
 
 // Robot-state booleans
@@ -155,39 +161,6 @@ public:
   		elevatorCoefficient = ((-leftController->GetZ() + 1) / 5) + 0.1;
   		robotDrive->TankDrive(driveCoefficient * rightController->GetY(), -driveCoefficient * leftController->GetY());
 
-  		// PID Test Driving
-  		if (pidButtonFlag && (utilityController->GetRawButton(PID_TEST_BACKWARD) || utilityController->GetRawButton(PID_TEST_FORWARD))) {
-  			float pidMovement = (utilityController->GetRawButton(PID_TEST_BACKWARD) ? -2000.0 : 2000.0);
-
-  			leftPID->Enable();
-  			rightPID->Enable();
-
-  			leftPID->SetSetpoint(leftPID->GetSetpoint() + pidMovement);
-  			rightPID->SetSetpoint(rightPID->GetSetpoint() + pidMovement);
-
-  			while ((rightPID->GetError() > 1.0) && (leftPID->GetError() > 1.0)) {
-  				cout << "DRIVING -- Right error: " << rightPID->GetError() << "  Left error: " << leftPID->GetError() << endl;
-  			}
-
-  			leftPID->Disable();
-  			rightPID->Disable();
-
-  			pidButtonFlag = false;
-  		} else if (!(utilityController->GetRawButton(PID_TEST_BACKWARD) || utilityController->GetRawButton(PID_TEST_FORWARD))) {
-  			pidButtonFlag = true;
-  		}
-
-//  		if (utilityController->GetRawAxis(1)) { // axis 1 & 3
-//  			utilityController
-//  			leftGrabber->SetSpeed(1.0); // + is outwards, - in inwards
-//  			rightGrabber->SetSpeed(1.0);
-//  		} else if (utilityController->GetRawButton(10)) {
-//			leftGrabber->SetSpeed(-1.0); // + is outwards, - in inwards
-//			rightGrabber->SetSpeed(-1.0);
-//		} else {
-  			leftGrabber->SetSpeed(utilityController->GetRawAxis(1)*4);
-  			rightGrabber->SetSpeed(utilityController->GetRawAxis(3)*4);
-//  		}
 
   		// Elevator code so that later we can add PID control loops to it
 		if (utilityController->GetRawButton(ELEVATOR_DOWN)) {
@@ -234,8 +207,12 @@ public:
   			leftGrabberSolenoid->Set(DoubleSolenoid::kOff);
   		}
 
+  		// Grabber Motor
+  		leftGrabber->SetSpeed(utilityController->GetRawAxis(1)*4);
+  		rightGrabber->SetSpeed(utilityController->GetRawAxis(3)*4);
 
 
+  		//Noodler
   		if (noodlerinuse||(rightController->GetY()<0&&leftController->GetY()<0)) {
 
   			if (noodlerdir) {
@@ -247,13 +224,69 @@ public:
   			noodler->SetSpeed(0);
   		}
 
-  		// Debugging Stuff
+  		// Debugging Stuff and testing
+
+//  		// PID Test Driving
+//  		  		if (pidButtonFlag && (utilityController->GetRawButton(PID_TEST_BACKWARD) || utilityController->GetRawButton(PID_TEST_FORWARD))) {
+//  		  			float pidMovement = (utilityController->GetRawButton(PID_TEST_BACKWARD) ? -2000.0 : 2000.0);
+//
+//  		  			leftPID->Enable();
+//  		  			rightPID->Enable();
+//
+//  		  			leftPID->SetSetpoint(leftPID->GetSetpoint() + pidMovement);
+//  		  			rightPID->SetSetpoint(rightPID->GetSetpoint() + pidMovement);
+//
+//  		  			while ((rightPID->GetError() > 1.0) && (leftPID->GetError() > 1.0)) {
+//  		  				cout << "DRIVING -- Right error: " << rightPID->GetError() << "  Left error: " << leftPID->GetError() << endl;
+//  		  			}
+//
+//  		  			leftPID->Disable();
+//  		  			rightPID->Disable();
+//
+//  		  			pidButtonFlag = false;
+//  		  		} else if (!(utilityController->GetRawButton(PID_TEST_BACKWARD) || utilityController->GetRawButton(PID_TEST_FORWARD))) {
+//  		  			pidButtonFlag = true;
+//  		  		}
+//
+  		 //PID Turn TO Test
+  		  		if (pidButtonFlag && (utilityController->GetRawButton(PID_TEST_BACKWARD) || utilityController->GetRawButton(PID_TEST_FORWARD))) {
+  		  			float turnto = 90;
+  		  			float pidMovement = (utilityController->GetRawButton(PID_TEST_BACKWARD) ?  AngleToSetpoint(turnto): -AngleToSetpoint(turnto));
+
+  		  			leftPID->Enable();
+  		  			rightPID->Enable();
+
+  		  			leftPID->SetSetpoint(leftPID->GetSetpoint() + pidMovement);
+  		  			rightPID->SetSetpoint(rightPID->GetSetpoint() - pidMovement);
+
+  		  			while ((rightPID->GetError() > 1.0) && (leftPID->GetError() > 1.0)) {
+  		  				cout << "DRIVING -- Right error: " << rightPID->GetError() << "  Left error: " << leftPID->GetError() << endl;
+  		  			}
+
+  		  			leftPID->Disable();
+  		  			rightPID->Disable();
+
+  		  			pidButtonFlag = false;
+  		  		} else if (!(utilityController->GetRawButton(PID_TEST_BACKWARD) || utilityController->GetRawButton(PID_TEST_FORWARD))) {
+  		  			pidButtonFlag = true;
+  		  		}
+
+
   		cout << "Right error: " << rightPID->GetError() << "  Left error: " << leftPID->GetError() << endl;
   	}
 
   	void DisabledContinuous(void) {}
   	void AutonomousContinuous(void) {}
   	void TeleopContinuous(void) {}
+
+
+  	//From an angle to a point which both much drive too
+  	float AngleToSetpoint(float angle){
+
+  		float arclength = (angle*DIAMETER_TURN*(PI/180));
+
+  	return arclength;
+  	}
 };
 
 START_ROBOT_CLASS(RobotDemo)
