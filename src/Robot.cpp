@@ -12,28 +12,25 @@
 #define __PRINT_COMMAND_H__
 #define DRIVE_ENCODER_PPR 	2048
 
-
 //
-//Joystick Mapping
+// Joystick Mapping
 //
-
-#define PID_TEST_FORWARD		9
-#define PID_TEST_BACKWARD		10
+#define NOODLER_IN				1
+#define NOODLER_OUT				2
 #define ELEVATOR_DOWN			5
 #define ELEVATOR_UP				6
 #define CLAW_IN					7
 #define CLAW_OUT				8
-#define NOODLER_IN				1
-#define NOODLER_OUT				2
+#define PID_TEST_FORWARD		9
+#define PID_TEST_BACKWARD		10
 
-#define JOYSTICK_DEAD_PERCENTAGE	.1
-#define PID_TEST_TURN_VALUE		90
+#define JOYSTICK_DEAD_PERCENTAGE 0.1
+#define PID_TEST_TURN_VALUE		 90
 
 //
-//Other Constants
+// Other Constants
 //
-#define DIAMETER_TURN			23.5
-
+#define RADIUS_TURN				11.75
 
 using namespace std;
 
@@ -98,30 +95,37 @@ public:
 
   		robotDrive = new RobotDrive(rightTalon, leftTalon);
 
-  		leftEncoder = new Encoder(0, 1, true, Encoder::EncodingType::k4X);
-  		rightEncoder = new Encoder(2, 3, true, Encoder::EncodingType::k4X);
+  		leftEncoder     = new Encoder(0, 1, true, Encoder::EncodingType::k4X);
+  		rightEncoder    = new Encoder(2, 3, true, Encoder::EncodingType::k4X);
   		elevatorEncoder = new Encoder(4, 5, true, Encoder::EncodingType::k4X);
 
-  		leftDistance = new DistanceEncoder(leftEncoder);
+  		leftDistance  = new DistanceEncoder(leftEncoder);
   		rightDistance = new DistanceEncoder(rightEncoder);
 
   		leftController     = new Joystick(0); // Logitech Attack 3
   		rightController    = new Joystick(1); // Logitech Attack 3
-  		utilityController = new Joystick(2); // Logitech Gamepad
+  		utilityController  = new Joystick(2); // Logitech Gamepad
 
   		leftPID =  new PIDController(0.0085, 0.0, 0.006, leftDistance, leftTalon);
   		rightPID = new PIDController(0.0085, 0.0, 0.006, rightDistance, rightTalon);
 
-  		leftGrabberSolenoid = new DoubleSolenoid(0, 1);
+  		leftGrabberSolenoid  = new DoubleSolenoid(0, 1);
   		rightGrabberSolenoid = new DoubleSolenoid(2, 3);
     }
+
+    /********************************** Extra methods *************************************/
+
+  	// From an angle to a point which both must drive to
+  	float AngleToSetpoint(float angle) {
+  		return (angle * RADIUS_TURN * (PI / 180));
+  	}
 
   	/********************************** Init Routines *************************************/
 
   	void RobotInit(void) {
-  		rightEncoder->SetDistancePerPulse(PI*4/360.0);
-  		leftEncoder->SetDistancePerPulse(PI*4/360.0);
-  		elevatorEncoder->SetDistancePerPulse(PI*4/360.0); // Needs to be updated with the radius of the elevator coil.
+  		rightEncoder->SetDistancePerPulse((PI * 4) / 360.0);
+  		leftEncoder->SetDistancePerPulse((PI * 4) / 360.0);
+  		elevatorEncoder->SetDistancePerPulse((PI * 4) / 360.0); // Needs to be updated with the radius of the elevator coil.
   	}
 
   	void DisabledInit(void) {
@@ -159,16 +163,9 @@ public:
   	}
 
   	void TeleopPeriodic(void) {
-
-  		//Get From Robot
-
   		// Initial Stuff
   		driveCoefficient = ((-rightController->GetZ() + 1) / 3.125) + 0.36;
   		elevatorCoefficient = ((-leftController->GetZ() + 1) / 5) + 0.1;
-
-
-
-
 
   		// Elevator code so that later we can add PID control loops to it
 		if (utilityController->GetRawButton(ELEVATOR_DOWN)) {
@@ -193,14 +190,14 @@ public:
 
   		// To Robot Activation
 
-  		float rightdrivestickvalue = 0;
-  		float leftdrivestickvalue = 0;
+  		float rightdrivestickvalue = rightController->GetY();
+  		float leftdrivestickvalue  =  leftController->GetY();
 
-  		if(rightController->GetY()>JOYSTICK_DEAD_PERCENTAGE){
-  			float rightdrivestickvalue = rightController->GetY();
+  		if(ABS(rightController->GetY()) < JOYSTICK_DEAD_PERCENTAGE) {
+  			rightdrivestickvalue = 0;
   		}
-  		if(leftController->GetY()>JOYSTICK_DEAD_PERCENTAGE){
-  			float leftdrivestickvalue = leftController->GetY();
+  		if(ABS(leftController->GetY()) < JOYSTICK_DEAD_PERCENTAGE) {
+  			leftdrivestickvalue = 0;
   		}
 
   		robotDrive->TankDrive(driveCoefficient * rightdrivestickvalue, -driveCoefficient * leftdrivestickvalue);
@@ -208,9 +205,9 @@ public:
   		// To add another use an or (||) so that it stops once it reaches a certain point
   		if (elevatorinuse) {
   			if (elevatorup) {
-  				elevator->SetSpeed(1);
+  				elevator->SetSpeed(elevatorCoefficient);
   			} else {
-  				elevator->SetSpeed(1);
+  				elevator->SetSpeed(-elevatorCoefficient);
   			}
   		} else {
   			elevator->SetSpeed(0);
@@ -229,13 +226,11 @@ public:
   		}
 
   		// Grabber Motor
-  		leftGrabber->SetSpeed(utilityController->GetRawAxis(1)*4);
-  		rightGrabber->SetSpeed(utilityController->GetRawAxis(3)*4);
+  		leftGrabber->SetSpeed(-utilityController->GetRawAxis(1));
+  		rightGrabber->SetSpeed(-utilityController->GetRawAxis(3));
 
-
-  		//Noodler
-  		if (noodlerinuse||(rightController->GetY()<0&&leftController->GetY()<0)) {
-
+  		// Noodler
+  		if (noodlerinuse || (rightController->GetY() < 0 && leftController->GetY() < 0)) {
   			if (noodlerdir) {
   				noodler->SetSpeed(.8);
   			} else {
@@ -269,30 +264,29 @@ public:
 //  		  			pidButtonFlag = true;
 //  		  		}
 //
-  		 //PID Turn TO Test
+  		 // PID Turn TO Test
+		if (pidButtonFlag && (utilityController->GetRawButton(PID_TEST_BACKWARD) || utilityController->GetRawButton(PID_TEST_FORWARD))) {
+			float pidMovement = (utilityController->GetRawButton(PID_TEST_BACKWARD) ?  AngleToSetpoint(PID_TEST_TURN_VALUE) : -AngleToSetpoint(PID_TEST_TURN_VALUE));
 
-			if (pidButtonFlag && (utilityController->GetRawButton(PID_TEST_BACKWARD) || utilityController->GetRawButton(PID_TEST_FORWARD))) {
+			leftPID->Enable();
+			rightPID->Enable();
 
-				float pidMovement = (utilityController->GetRawButton(PID_TEST_BACKWARD) ?  AngleToSetpoint(PID_TEST_TURN_VALUE): -AngleToSetpoint(PID_TEST_TURN_VALUE));
+			leftPID->SetSetpoint(leftPID->GetSetpoint() + pidMovement);
+			rightPID->SetSetpoint(rightPID->GetSetpoint() - pidMovement);
 
-				leftPID->Enable();
-				rightPID->Enable();
-
-				leftPID->SetSetpoint(leftPID->GetSetpoint() + pidMovement);
-				rightPID->SetSetpoint(rightPID->GetSetpoint() - pidMovement);
-
-				while ((rightPID->GetError() > 1.0) && (leftPID->GetError() > 1.0)) {
-					cout << "DRIVING -- Right error: " << rightPID->GetError() << "  Left error: " << leftPID->GetError() << endl;
-				}
-
-				leftPID->Disable();
-				rightPID->Disable();
-
-				pidButtonFlag = false;
-			} else if (!(utilityController->GetRawButton(PID_TEST_BACKWARD) || utilityController->GetRawButton(PID_TEST_FORWARD))) {
-				pidButtonFlag = true;
+			while ((ABS(rightPID->GetError()) > 5.0) || (ABS(leftPID->GetError()) > 5.0)) {
+				cout << "DRIVING -- Right error: " << rightPID->GetError() << "  Left error: " << leftPID->GetError() << endl;
 			}
 
+			leftPID->Disable();
+			rightPID->Disable();
+
+			pidButtonFlag = false;
+		} else if (!(utilityController->GetRawButton(PID_TEST_BACKWARD) || utilityController->GetRawButton(PID_TEST_FORWARD))) {
+			pidButtonFlag = true;
+		}
+
+		cout << "Angle: " << AngleToSetpoint(PID_TEST_TURN_VALUE) << endl;
 
   		cout << "Right error: " << rightPID->GetError() << "  Left error: " << leftPID->GetError() << endl;
   	}
@@ -300,15 +294,6 @@ public:
   	void DisabledContinuous(void) {}
   	void AutonomousContinuous(void) {}
   	void TeleopContinuous(void) {}
-
-
-  	//From an angle to a point which both much drive too
-  	float AngleToSetpoint(float angle){
-
-  		float arclength = (angle*DIAMETER_TURN*(PI/180));
-
-  	return arclength;
-  	}
 };
 
 START_ROBOT_CLASS(RobotDemo)
