@@ -52,9 +52,9 @@ bool pidButtonMoveFlag = true;
 float driveCoefficient;
 float elevatorCoefficient;
 
-//PID distances
-float rightPIDDistance;
-float leftPIDDistance;
+// Autonomous instructions
+vector<Movement> instructions;
+int currentInstruction = 0;
 
 class RobotDemo: public IterativeRobot {
 	// Drive system motor controllers
@@ -115,10 +115,8 @@ public:
 		rightController = new Joystick(1); // Logitech Attack 3
 		utilityController = new Joystick(2); // Logitech Gamepad
 
-		leftPID = new PIDController(0.0085, 0.0, 0.006, leftDistance,
-				leftTalon);
-		rightPID = new PIDController(0.0085, 0.0, 0.006, rightDistance,
-				rightTalon);
+		leftPID = new PIDController(0.0085, 0.0, 0.006, leftDistance, leftTalon);
+		rightPID = new PIDController(0.0085, 0.0, 0.006, rightDistance, rightTalon);
 
 		leftGrabberSolenoid = new DoubleSolenoid(0, 1);
 		rightGrabberSolenoid = new DoubleSolenoid(2, 3);
@@ -130,23 +128,6 @@ public:
 	float AngleToSetpoint(float angle) {
 		return (angle * RADIUS_TURN * (PI / 180));
 	}
-
-//	bool DriveToPoint(float distance) {
-//		rightPID->Enable();
-//		leftPID->Enable();
-//		inProcessFlag = true;
-//
-//		cout << "PID Enabled" << endl;
-//
-//		rightPID->SetSetpoint(distance);
-//		leftPID->SetSetpoint(distance);
-//
-//		return (ABS(rightPID->GetError()) < 5.0 && ABS(leftPID->GetError()) < 5.0);
-//	}
-//
-//	bool DriveToAngle(float angle){
-//
-//	}
 
 	/********************************** Init Routines *************************************/
 
@@ -162,14 +143,19 @@ public:
 	}
 
 	void AutonomousInit(void) {
-		vector<Movement> instructions;
-		instructions.push_back(Movement(false, 100.0, leftPID, rightPID));
+		rightPID->Enable();
+		leftPID->Enable();
+		cout << "PID Enabled" << endl;
+
+		instructions.push_back(Movement(false, 400.0, leftPID, rightPID));
+		instructions.push_back(Movement(true, 90.0, leftPID, rightPID));
+		instructions.push_back(Movement(false, 400.0, leftPID, rightPID));
 		instructions.push_back(Movement(true, 90.0, leftPID, rightPID));
 	}
 
 	void TeleopInit(void) {
-		//rightPID->Enable();
-		//leftPID->Enable();
+		rightPID->Disable();
+		leftPID->Disable();
 
 		// Set all motor controllers to be not moving initially.
 		elevator->SetSpeed(0.0);
@@ -179,13 +165,21 @@ public:
 
 	/********************************** Periodic Routines *************************************/
 
-	void DisabledPeriodic(void) {
-	}
+	void DisabledPeriodic(void) {}
 
 	void AutonomousPeriodic(void) {
 		// cout << "Right error: " << rightPID->GetError() << "  Left error: " << leftPID->GetError() << endl;
-
-
+		if(!instructions[currentInstruction].IsRunning()) {
+			instructions[currentInstruction].DoMovement();
+		} else if(instructions[currentInstruction].IsComplete()) {
+			currentInstruction++;
+		} else if(instructions.size() <= ((unsigned int) currentInstruction)) {
+			rightPID->Disable();
+			leftPID->Disable();
+			cout << "Autonomous finished!" << endl;
+		} else {
+			cout << currentInstruction << endl;
+		}
 	}
 
 	void TeleopPeriodic(void) {
