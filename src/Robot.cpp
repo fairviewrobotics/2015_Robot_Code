@@ -16,6 +16,7 @@
 //
 // Joystick Mapping
 //
+
 #define NOODLER_IN				1
 #define NOODLER_OUT				2
 #define PID_TEST_3				3
@@ -60,7 +61,8 @@ class RobotDemo: public IterativeRobot {
 	// Drive system motor controllers
 	Talon *rightTalon;
 	Talon *leftTalon;
-	Victor *elevator;
+	Victor *elevator1;
+	Victor *elevator2;
 	Victor *leftGrabber;
 	Victor *rightGrabber;
 	Victor *noodler;
@@ -97,7 +99,8 @@ public:
 	RobotDemo(void) {
 		leftTalon = new Talon(0);
 		rightTalon = new Talon(1);
-		elevator = new Victor(2);
+		elevator1 = new Victor(2);
+		elevator2 = new Victor(7);
 		leftGrabber = new Victor(3);
 		rightGrabber = new Victor(4);
 		noodler = new Victor(6);
@@ -158,7 +161,8 @@ public:
 		leftPID->Disable();
 
 		// Set all motor controllers to be not moving initially.
-		elevator->SetSpeed(0.0);
+		elevator1->SetSpeed(0.0);
+		elevator2->SetSpeed(0.0);
 		leftTalon->SetSpeed(0.0);
 		rightTalon->SetSpeed(0.0);
 	}
@@ -226,12 +230,15 @@ public:
 		// To add another use an or (||) so that it stops once it reaches a certain point
 		if (elevatorinuse) {
 			if (elevatorup) {
-				elevator->SetSpeed(elevatorCoefficient);
+				elevator1->SetSpeed(elevatorCoefficient);
+				elevator2->SetSpeed(elevatorCoefficient);
 			} else {
-				elevator->SetSpeed(-elevatorCoefficient);
+				elevator1->SetSpeed(-elevatorCoefficient);
+				elevator2->SetSpeed(-elevatorCoefficient);
 			}
 		} else {
-			elevator->SetSpeed(0);
+			elevator1->SetSpeed(0);
+			elevator2->SetSpeed(0);
 		}
 
 		// Grabber Solenoids
