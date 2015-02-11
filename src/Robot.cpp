@@ -19,8 +19,8 @@
 
 #define NOODLER_IN				1
 #define NOODLER_OUT				2
-#define PID_TEST_3				3
-#define PID_TEST_4				4
+#define PID_TEST_3				99
+#define PID_TEST_4				99
 #define ELEVATOR_DOWN			5
 #define ELEVATOR_UP				6
 #define CLAW_IN					7
@@ -74,6 +74,11 @@ class RobotDemo: public IterativeRobot {
 	DistanceEncoder *rightDistance;
 	DistanceEncoder *leftDistance;
 
+	//Limit Switches
+	DigitalInput *bottomSwitch;
+	DigitalInput *middleSwitch;
+	DigitalInput *topSwitch;
+
 	// Joysticks
 	Joystick *leftController;
 	Joystick *rightController;
@@ -106,6 +111,10 @@ public:
 		noodler = new Victor(6);
 
 		robotDrive = new RobotDrive(rightTalon, leftTalon);
+
+		bottomSwitch = new DigitalInput(6);
+		middleSwitch = new DigitalInput(7);
+		topSwitch = new DigitalInput(8);
 
 		leftEncoder = new Encoder(0, 1, true, Encoder::EncodingType::k4X);
 		rightEncoder = new Encoder(2, 3, true, Encoder::EncodingType::k4X);
@@ -363,6 +372,7 @@ public:
 		cout << "Angle: " << AngleToSetpoint(PID_TEST_TURN_VALUE) << endl;
 		cout << "Right error: " << rightPID->GetError() << "  Left error: "
 				<< leftPID->GetError() << endl;
+		cout << "BottomSwitch: "<< bottomSwitch->Get() << " MiddleSwitch: " << middleSwitch->Get() << endl;
 	}
 
 	void DisabledContinuous(void) {
