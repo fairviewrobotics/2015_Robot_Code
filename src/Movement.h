@@ -12,7 +12,7 @@ class Movement {
 		float          m_distOrAngle;
 		PIDController* m_leftPIDControl;
 		PIDController* m_rightPIDControl;
-		PIDController* m_elevatorControl;
+
 
 
 		void DriveTo(void);
