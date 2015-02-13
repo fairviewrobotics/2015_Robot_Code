@@ -10,7 +10,7 @@
 #include <RobotDriveOutput.h>
 #include <Movement.h>
 
-#define __PRINT_COMMAND_H__
+#define  __PRINT_COMMAND_H__
 #define DRIVE_ENCODER_PPR 	2048
 
 //
@@ -19,8 +19,8 @@
 
 #define NOODLER_IN				1
 #define NOODLER_OUT				2
-#define PID_TEST_3				99
-#define PID_TEST_4				99
+#define PID_TEST_3				3
+#define PID_TEST_4				4
 #define ELEVATOR_DOWN			5
 #define ELEVATOR_UP				6
 #define CLAW_IN					7
@@ -42,7 +42,7 @@ using namespace std;
 bool elevatorinuse = false;
 bool elevatorup = true;
 bool noodlerinuse = false;
-bool noodlerdir = false;
+bool noodlerIn = false;
 
 // Flags
 bool inProcessFlag = false;
@@ -127,8 +127,10 @@ public:
 		rightController = new Joystick(1); // Logitech Attack 3
 		utilityController = new Joystick(2); // Logitech Gamepad
 
-		leftPID = new PIDController(0.0085, 0.0, 0.006, leftDistance, leftTalon);
-		rightPID = new PIDController(0.0085, 0.0, 0.006, rightDistance, rightTalon);
+		leftPID = new PIDController(0.0085, 0.0, 0.006, leftDistance,
+				leftTalon);
+		rightPID = new PIDController(0.0085, 0.0, 0.006, rightDistance,
+				rightTalon);
 
 		leftGrabberSolenoid = new DoubleSolenoid(0, 1);
 		rightGrabberSolenoid = new DoubleSolenoid(2, 3);
@@ -144,9 +146,6 @@ public:
 	/********************************** Init Routines *************************************/
 
 	void RobotInit(void) {
-		rightEncoder->SetDistancePerPulse((PI * 3) / 360.0);
-		leftEncoder->SetDistancePerPulse((PI * 3) / 360.0);
-		elevatorEncoder->SetDistancePerPulse((PI * 3) / 360.0); // Needs to be updated with the radius of the elevator coil.
 	}
 
 	void DisabledInit(void) {
@@ -155,14 +154,15 @@ public:
 	}
 
 	void AutonomousInit(void) {
-		rightPID->Enable();
-		leftPID->Enable();
-		cout << "PID Enabled" << endl;
 
-		instructions.push_back(Movement(false, 400.0, leftPID, rightPID));
+		cout << "PID Enabled party?" << endl;
+
+		instructions.push_back(Movement(false, 40.0, leftPID, rightPID));
 		instructions.push_back(Movement(true, 90.0, leftPID, rightPID));
-		instructions.push_back(Movement(false, 400.0, leftPID, rightPID));
+		instructions.push_back(Movement(false, 40.0, leftPID, rightPID));
 		instructions.push_back(Movement(true, 90.0, leftPID, rightPID));
+
+		cout << "Added Commands" << endl;
 	}
 
 	void TeleopInit(void) {
@@ -178,19 +178,27 @@ public:
 
 	/********************************** Periodic Routines *************************************/
 
-	void DisabledPeriodic(void) {}
+	void DisabledPeriodic(void) {
+	}
 
 	void AutonomousPeriodic(void) {
 		// cout << "Right error: " << rightPID->GetError() << "  Left error: " << leftPID->GetError() << endl;
-		if(!instructions[currentInstruction].IsRunning()) {
+		if (!instructions[currentInstruction].IsRunning()) {
 			instructions[currentInstruction].DoMovement();
-		} else if(instructions[currentInstruction].IsComplete()) {
+			cout << "Doing "<< currentInstruction-1 << " Inprocess" << endl;
+
+		} else if (instructions[currentInstruction].IsComplete()) {
 			currentInstruction++;
-		} else if(instructions.size() <= ((unsigned int) currentInstruction)) {
+			cout << "Instruction "<< currentInstruction-1 << " Complete" << endl;
+
+		} else if (instructions.size() <= ((unsigned int) currentInstruction)) {
 			rightPID->Disable();
 			leftPID->Disable();
+
 			cout << "Autonomous finished!" << endl;
+
 		} else {
+			cout << instructions[currentInstruction].GetError() << endl;
 			cout << currentInstruction << endl;
 		}
 	}
@@ -213,28 +221,28 @@ public:
 
 		if (utilityController->GetRawButton(NOODLER_IN)) {
 			noodlerinuse = true;
-			noodlerdir = true;
+			noodlerIn = true;
 		} else if (utilityController->GetRawButton(NOODLER_OUT)) {
 			noodlerinuse = true;
-			noodlerdir = false;
+			noodlerIn = false;
 		} else {
 			noodlerinuse = false;
 		}
 
 		// To Robot Activation
 
-		float rightdrivestickvalue = rightController->GetY();
-		float leftdrivestickvalue = leftController->GetY();
+		float rightDriveStickValue = rightController->GetY();
+		float leftDriveStickValue = leftController->GetY();
 
 		if (ABS(rightController->GetY()) < JOYSTICK_DEAD_PERCENTAGE) {
-			rightdrivestickvalue = 0;
+			rightDriveStickValue = 0;
 		}
 		if (ABS(leftController->GetY()) < JOYSTICK_DEAD_PERCENTAGE) {
-			leftdrivestickvalue = 0;
+			leftDriveStickValue = 0;
 		}
 
-		robotDrive->TankDrive(driveCoefficient * rightdrivestickvalue,
-				driveCoefficient * leftdrivestickvalue);
+		robotDrive->TankDrive(driveCoefficient * rightDriveStickValue,
+				driveCoefficient * leftDriveStickValue);
 
 		// To add another use an or (||) so that it stops once it reaches a certain point
 		if (elevatorinuse) {
@@ -268,8 +276,8 @@ public:
 
 		// Noodler
 		if (noodlerinuse
-				|| (rightdrivestickvalue > 0 && leftdrivestickvalue > 0)) {
-			if (noodlerdir) {
+				|| (rightDriveStickValue > 0 && leftDriveStickValue > 0)) {
+			if (noodlerIn) {
 				noodler->SetSpeed(.8);
 			} else {
 				noodler->SetSpeed(-.8);
@@ -281,8 +289,7 @@ public:
 		// Debugging Stuff and testing
 
 		// PID Move TO Test
-		if (pidButtonMoveFlag
-				&& !inProcessFlag
+		if (pidButtonMoveFlag && !inProcessFlag
 				&& (utilityController->GetRawButton(PID_TEST_3)
 						|| utilityController->GetRawButton(PID_TEST_4))) {
 
@@ -290,12 +297,14 @@ public:
 			pidButtonMoveFlag = false;
 
 			float pidMovement = (
-					utilityController->GetRawButton(PID_TEST_4) ?
-							1000 :
-							-1000);
+					utilityController->GetRawButton(PID_TEST_4) ? 400 : -400);
 
 			leftPID->Enable();
 			rightPID->Enable();
+
+			leftPID->Reset();
+			rightPID->Reset();
+
 			cout << "PID Enabled" << endl;
 
 			float tosetpointright = leftPID->GetSetpoint() + pidMovement;
@@ -303,9 +312,6 @@ public:
 
 			leftPID->SetSetpoint(tosetpointleft);
 			rightPID->SetSetpoint(tosetpointright);
-
-			leftPID->SetAbsoluteTolerance(5.0);
-			rightPID->SetAbsoluteTolerance(5.0);
 
 			while ((ABS(rightPID->GetError()) > 5.0)
 					&& (ABS(leftPID->GetError()) > 5.0)) {
@@ -315,19 +321,20 @@ public:
 
 			leftPID->Disable();
 			rightPID->Disable();
+
 			cout << "PID Disabled" << endl;
 
 			pidButtonMoveFlag = true;
 			inProcessFlag = false;
 
-		} else if (!inProcessFlag&&(!(utilityController->GetRawButton(PID_TEST_3)
-				|| utilityController->GetRawButton(PID_TEST_4)))) {
+		} else if (!inProcessFlag
+				&& (!(utilityController->GetRawButton(PID_TEST_3)
+						|| utilityController->GetRawButton(PID_TEST_4)))) {
 			pidButtonMoveFlag = true;
 		}
 
 		// PID Turn TO Test
-		if (pidButtonTurnFlag
-				&& !inProcessFlag
+		if (pidButtonTurnFlag && !inProcessFlag
 				&& (utilityController->GetRawButton(PID_TEST_2)
 						|| utilityController->GetRawButton(PID_TEST_1))) {
 
@@ -337,9 +344,12 @@ public:
 					utilityController->GetRawButton(PID_TEST_2) ?
 							AngleToSetpoint(PID_TEST_TURN_VALUE) :
 							-AngleToSetpoint(PID_TEST_TURN_VALUE));
-
 			leftPID->Enable();
 			rightPID->Enable();
+
+			leftPID->Reset();
+			rightPID->Reset();
+
 			cout << "PID Enabled" << endl;
 
 			float tosetpointright = leftPID->GetSetpoint() + pidMovement;
@@ -347,9 +357,6 @@ public:
 
 			leftPID->SetSetpoint(tosetpointleft);
 			rightPID->SetSetpoint(tosetpointright);
-
-			leftPID->SetAbsoluteTolerance(5.0);
-			rightPID->SetAbsoluteTolerance(5.0);
 
 			while ((ABS(rightPID->GetError()) > 5.0)
 					&& (ABS(leftPID->GetError()) > 5.0)) {
@@ -364,15 +371,16 @@ public:
 			pidButtonTurnFlag = true;
 			inProcessFlag = false;
 
-		} else if (!inProcessFlag&&(!(utilityController->GetRawButton(PID_TEST_2)
-				|| utilityController->GetRawButton(PID_TEST_1)))) {
+		} else if (!inProcessFlag
+				&& (!(utilityController->GetRawButton(PID_TEST_2)
+						|| utilityController->GetRawButton(PID_TEST_1)))) {
 			pidButtonTurnFlag = true;
 		}
 
-		cout << "Angle: " << AngleToSetpoint(PID_TEST_TURN_VALUE) << endl;
 		cout << "Right error: " << rightPID->GetError() << "  Left error: "
 				<< leftPID->GetError() << endl;
-		cout << "BottomSwitch: "<< bottomSwitch->Get() << " MiddleSwitch: " << middleSwitch->Get() << endl;
+		cout << "BottomSwitch: " << bottomSwitch->Get() << " MiddleSwitch: "
+				<< middleSwitch->Get() << endl;
 	}
 
 	void DisabledContinuous(void) {

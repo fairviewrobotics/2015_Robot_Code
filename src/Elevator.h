@@ -20,8 +20,19 @@ class Elevator {
 		Victor* m_elevator1;
 		Victor* m_elevator2;
 
+		DigitalInput* m_bottomSwitch;
+		DigitalInput* m_middleSwitch;
+		DigitalInput* m_topSwitch;
+
+
+		void upElevatorBin(void);
+		void upElevatorTote(void);
+		void downElevatorTote(void);
+		void downElevatorBin(void);
+		void upOneTote();
+		void downOneTote(void);
 	public:
-		Elevator(bool rising,bool toBin, Victor* el1, Victor* el2);
+		Elevator(bool rising,bool toBin, Victor* el1, Victor* el2, DigitalInput* bottomSwitch, DigitalInput* middleSwitch, DigitalInput* topSwitch);
 
 		bool IsComplete();
 		bool IsMoving();
@@ -29,12 +40,35 @@ class Elevator {
 };
 
 // Constructor
-Elevator::Elevator(bool rising, bool toBin,  Victor* el1, Victor* el2 ) {
+Elevator::Elevator(bool rising, bool toBin,  Victor* el1, Victor* el2, DigitalInput* bottomSwitch, DigitalInput* middleSwitch, DigitalInput* topSwitch ) {
 	m_checkToBin = toBin;
 	m_isRising = rising;
 	m_elevator1 = el1;
 	m_elevator2 = el2;
+	m_bottomSwitch = bottomSwitch;
+	m_middleSwitch = middleSwitch;
+	m_topSwitch = topSwitch;
 
 }
+void doMovement(){
 
+}
+void upElevatorBin(){
+
+}
+void upElevatorTote(){
+
+}
+void downElevatorTote(){
+
+}
+void downElevatorBin(){
+
+}
+void upOneTote(){
+
+}
+void downOneTote(){
+
+}
 #endif /* SRC_ELEVATOR_H_ */

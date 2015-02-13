@@ -13,8 +13,6 @@ class Movement {
 		PIDController* m_leftPIDControl;
 		PIDController* m_rightPIDControl;
 
-
-
 		void DriveTo(void);
 		void AngleTo(void);
 		float AngleToSetpoint(float angle);
@@ -23,6 +21,7 @@ class Movement {
 		bool IsComplete(void);
 		bool IsRunning(void);
 		void DoMovement(void);
+		float GetError(void);
 };
 
 // Constructor
@@ -32,6 +31,9 @@ Movement::Movement(bool turn, float distOrAngle, PIDController* leftPID, PIDCont
 
 	m_leftPIDControl = leftPID;
 	m_rightPIDControl = rightPID;
+
+	printf("Movement Object Built");
+
 }
 
 bool Movement::IsComplete(void) {
@@ -45,8 +47,13 @@ bool Movement::IsRunning(void) {
 
 void Movement::DoMovement(void) {
 	m_isOperating = true;
+	m_rightPIDControl->Enable();
+	m_leftPIDControl->Enable();
+
 	m_rightPIDControl->Reset();
 	m_leftPIDControl->Reset();
+
+	printf("PID Reset");
 
 	if(m_turn) {
 		AngleTo();
@@ -55,12 +62,13 @@ void Movement::DoMovement(void) {
 	}
 }
 
-void Movement::DriveTo() {
+void Movement::DriveTo(void) {
 	m_rightPIDControl->SetSetpoint(m_distOrAngle);
 	m_leftPIDControl->SetSetpoint(m_distOrAngle);
+
 }
 
-void Movement::AngleTo() {
+void Movement::AngleTo(void) {
 	float angleDistance = AngleToSetpoint(m_distOrAngle);
 
 	m_rightPIDControl->SetSetpoint(angleDistance);
@@ -70,6 +78,11 @@ void Movement::AngleTo() {
 float Movement::AngleToSetpoint(float angle) {
 	// Robot Radius Turn is 11.75
 	return (angle * 11.75 * (PI / 180));
+}
+
+float Movement::GetError(void){
+	float rightError = m_rightPIDControl -> GetError();
+	return rightError;
 }
 
 #endif /* SRC_MOVEMENT_H_ */
