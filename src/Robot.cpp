@@ -39,9 +39,9 @@
 using namespace std;
 
 // Robot-state booleans
-bool elevatorinuse = false;
-bool elevatorup = true;
-bool noodlerinuse = false;
+bool elevatorInUse = false;
+bool elevatorUp = true;
+bool noodlerInUse = false;
 bool noodlerIn = false;
 
 // Flags
@@ -61,6 +61,7 @@ class RobotDemo: public IterativeRobot {
 	// Drive system motor controllers
 	Talon *rightTalon;
 	Talon *leftTalon;
+
 	Victor *elevator1;
 	Victor *elevator2;
 	Victor *leftGrabber;
@@ -151,6 +152,14 @@ public:
 	void DisabledInit(void) {
 		rightPID->Reset();
 		leftPID->Reset();
+
+		rightPID->Disable();
+		leftPID->Disable();
+
+		elevator1->SetSpeed(0.0);
+		elevator2->SetSpeed(0.0);
+		leftTalon->SetSpeed(0.0);
+		rightTalon->SetSpeed(0.0);
 	}
 
 	void AutonomousInit(void) {
@@ -210,23 +219,23 @@ public:
 
 		// Elevator code so that later we can add PID control loops to it
 		if (utilityController->GetRawButton(ELEVATOR_DOWN)) {
-			elevatorinuse = true;
-			elevatorup = false;
+			elevatorInUse = true;
+			elevatorUp = false;
 		} else if (utilityController->GetRawButton(ELEVATOR_UP)) {
-			elevatorinuse = true;
-			elevatorup = true;
+			elevatorInUse = true;
+			elevatorUp = true;
 		} else {
-			elevatorinuse = false;
+			elevatorInUse = false;
 		}
 
 		if (utilityController->GetRawButton(NOODLER_IN)) {
-			noodlerinuse = true;
+			noodlerInUse = true;
 			noodlerIn = true;
 		} else if (utilityController->GetRawButton(NOODLER_OUT)) {
-			noodlerinuse = true;
+			noodlerInUse = true;
 			noodlerIn = false;
 		} else {
-			noodlerinuse = false;
+			noodlerInUse = false;
 		}
 
 		// To Robot Activation
@@ -245,8 +254,8 @@ public:
 				driveCoefficient * leftDriveStickValue);
 
 		// To add another use an or (||) so that it stops once it reaches a certain point
-		if (elevatorinuse) {
-			if (elevatorup) {
+		if (elevatorInUse) {
+			if (elevatorUp) {
 				elevator1->SetSpeed(elevatorCoefficient);
 				elevator2->SetSpeed(elevatorCoefficient);
 			} else {
@@ -275,7 +284,7 @@ public:
 		rightGrabber->SetSpeed(-utilityController->GetRawAxis(3));
 
 		// Noodler
-		if (noodlerinuse
+		if (noodlerInUse
 				|| (rightDriveStickValue > 0 && leftDriveStickValue > 0)) {
 			if (noodlerIn) {
 				noodler->SetSpeed(.8);
@@ -294,35 +303,10 @@ public:
 						|| utilityController->GetRawButton(PID_TEST_4))) {
 
 			inProcessFlag = true;
-			pidButtonMoveFlag = false;
+			pidButtonTurnFlag = false;
 
-			float pidMovement = (
-					utilityController->GetRawButton(PID_TEST_4) ? 400 : -400);
-
-			leftPID->Enable();
-			rightPID->Enable();
-
-			leftPID->Reset();
-			rightPID->Reset();
-
-			cout << "PID Enabled" << endl;
-
-			float tosetpointright = leftPID->GetSetpoint() + pidMovement;
-			float tosetpointleft = rightPID->GetSetpoint() - pidMovement;
-
-			leftPID->SetSetpoint(tosetpointleft);
-			rightPID->SetSetpoint(tosetpointright);
-
-			while ((ABS(rightPID->GetError()) > 5.0)
-					&& (ABS(leftPID->GetError()) > 5.0)) {
-				cout << "DRIVING -- Right error: " << rightPID->GetError()
-						<< "  Left error: " << leftPID->GetError() << endl;
-			}
-
-			leftPID->Disable();
-			rightPID->Disable();
-
-			cout << "PID Disabled" << endl;
+			Movement* mov = new Movement(false, 100.0, leftPID, rightPID);
+			mov->DoMovement();
 
 			pidButtonMoveFlag = true;
 			inProcessFlag = false;
@@ -340,33 +324,9 @@ public:
 
 			inProcessFlag = true;
 			pidButtonTurnFlag = false;
-			float pidMovement = (
-					utilityController->GetRawButton(PID_TEST_2) ?
-							AngleToSetpoint(PID_TEST_TURN_VALUE) :
-							-AngleToSetpoint(PID_TEST_TURN_VALUE));
-			leftPID->Enable();
-			rightPID->Enable();
 
-			leftPID->Reset();
-			rightPID->Reset();
-
-			cout << "PID Enabled" << endl;
-
-			float tosetpointright = leftPID->GetSetpoint() + pidMovement;
-			float tosetpointleft = rightPID->GetSetpoint() - pidMovement;
-
-			leftPID->SetSetpoint(tosetpointleft);
-			rightPID->SetSetpoint(tosetpointright);
-
-			while ((ABS(rightPID->GetError()) > 5.0)
-					&& (ABS(leftPID->GetError()) > 5.0)) {
-				cout << "DRIVING -- Right error: " << rightPID->GetError()
-						<< "  Left error: " << leftPID->GetError() << endl;
-			}
-
-			leftPID->Disable();
-			rightPID->Disable();
-			cout << "PID Disabled" << endl;
+			Movement* mov = new Movement(true, 90.0, leftPID, rightPID);
+			mov->DoMovement();
 
 			pidButtonTurnFlag = true;
 			inProcessFlag = false;

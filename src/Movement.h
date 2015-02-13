@@ -65,7 +65,6 @@ void Movement::DoMovement(void) {
 void Movement::DriveTo(void) {
 	m_rightPIDControl->SetSetpoint(m_distOrAngle);
 	m_leftPIDControl->SetSetpoint(m_distOrAngle);
-
 }
 
 void Movement::AngleTo(void) {
