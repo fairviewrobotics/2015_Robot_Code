@@ -46,27 +46,32 @@ Elevator::Elevator(bool rising, bool toBin,  Victor* el1, Victor* el2, DigitalIn
 	m_elevator2 = el2;
 	m_bottomSwitch = bottomSwitch;
 	m_middleSwitch = middleSwitch;
-
 }
+
 void doMovement(){
-	if(){
-
-	}else if(){
-
-	}else if(){
-
-	}
+//	if(){
+//
+//	}else if(){
+//
+//	}else if(){
+//
+//	}
 }
-void downElevatorTote(){
 
-}
-void downElevatorBin(){
+void downElevatorTote() {
 
 }
-void upOneTote(){
+
+void downElevatorBin() {
 
 }
-void downOneTote(){
+
+void upOneTote() {
 
 }
+
+void down() {
+
+}
+
 #endif /* SRC_ELEVATOR_H_ */

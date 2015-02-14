@@ -6,9 +6,7 @@
 
 class Movement {
 	private:
-		bool           m_finished = false;
 		bool           m_turn;
-		bool		   m_isOperating = false;
 		float          m_distOrAngle;
 		PIDController* m_leftPIDControl;
 		PIDController* m_rightPIDControl;
@@ -16,7 +14,10 @@ class Movement {
 		void DriveTo(void);
 		void AngleTo(void);
 		float AngleToSetpoint(float angle);
+
 	public:
+		bool           m_finished = false;
+		bool		   m_isOperating = false;
 		Movement(bool turn, float distOrAngle, PIDController* leftPID, PIDController* rightPID);
 		bool IsComplete(void);
 		bool IsRunning(void);
@@ -31,9 +32,6 @@ Movement::Movement(bool turn, float distOrAngle, PIDController* leftPID, PIDCont
 
 	m_leftPIDControl = leftPID;
 	m_rightPIDControl = rightPID;
-
-	printf("Movement Object Built");
-
 }
 
 bool Movement::IsComplete(void) {
@@ -46,7 +44,7 @@ bool Movement::IsRunning(void) {
 }
 
 void Movement::DoMovement(void) {
-	m_isOperating = true;
+	m_isOperating = false;
 	m_rightPIDControl->Enable();
 	m_leftPIDControl->Enable();
 
@@ -63,11 +61,14 @@ void Movement::DoMovement(void) {
 }
 
 void Movement::DriveTo(void) {
+	m_isOperating = true;
+
 	m_rightPIDControl->SetSetpoint(m_distOrAngle);
 	m_leftPIDControl->SetSetpoint(m_distOrAngle);
 }
 
 void Movement::AngleTo(void) {
+	m_isOperating = true;
 	float angleDistance = AngleToSetpoint(m_distOrAngle);
 
 	m_rightPIDControl->SetSetpoint(angleDistance);

@@ -166,10 +166,13 @@ public:
 
 		cout << "PID Enabled party?" << endl;
 
-		instructions.push_back(Movement(false, 40.0, leftPID, rightPID));
-		instructions.push_back(Movement(true, 90.0, leftPID, rightPID));
-		instructions.push_back(Movement(false, 40.0, leftPID, rightPID));
-		instructions.push_back(Movement(true, 90.0, leftPID, rightPID));
+		leftTalon->SetSafetyEnabled(false);
+		rightTalon->SetSafetyEnabled(false);
+
+		instructions.push_back(Movement(false, 400.0, leftPID, rightPID));
+//		instructions.push_back(Movement(true, 90.0, leftPID, rightPID));
+//		instructions.push_back(Movement(false, 40.0, leftPID, rightPID));
+//		instructions.push_back(Movement(true, 90.0, leftPID, rightPID));
 
 		cout << "Added Commands" << endl;
 	}
@@ -187,29 +190,27 @@ public:
 
 	/********************************** Periodic Routines *************************************/
 
-	void DisabledPeriodic(void) {
-	}
+	void DisabledPeriodic(void) {}
 
 	void AutonomousPeriodic(void) {
-		// cout << "Right error: " << rightPID->GetError() << "  Left error: " << leftPID->GetError() << endl;
+		cout << "Right error: " << rightPID->GetError() << "  Left error: " << leftPID->GetError() << endl;
 		if (!instructions[currentInstruction].IsRunning()) {
 			instructions[currentInstruction].DoMovement();
-			cout << "Doing "<< currentInstruction-1 << " Inprocess" << endl;
-
-		} else if (instructions[currentInstruction].IsComplete()) {
-			currentInstruction++;
-			cout << "Instruction "<< currentInstruction-1 << " Complete" << endl;
-
-		} else if (instructions.size() <= ((unsigned int) currentInstruction)) {
-			rightPID->Disable();
-			leftPID->Disable();
-
-			cout << "Autonomous finished!" << endl;
-
-		} else {
-			cout << instructions[currentInstruction].GetError() << endl;
-			cout << currentInstruction << endl;
+			cout << "Starting movement #" << currentInstruction << endl;
 		}
+//		} else if (instructions[currentInstruction].IsComplete()) {
+//			cout << "Instruction "<< currentInstruction << " Complete" << endl;
+//			currentInstruction++;
+//		} else if (instructions.size() <= ((unsigned int) currentInstruction)) {
+//			rightPID->Disable();
+//			leftPID->Disable();
+//
+//			cout << "Autonomous finished!" << endl;
+//		} else {
+//			cout << instructions[currentInstruction].GetError() << endl;
+//			cout << currentInstruction << endl;
+//		}
+		cout << "Doing " << currentInstruction << " Inprocess: " << instructions[currentInstruction].IsComplete() << endl;
 	}
 
 	void TeleopPeriodic(void) {
@@ -298,44 +299,44 @@ public:
 		// Debugging Stuff and testing
 
 		// PID Move TO Test
-		if (pidButtonMoveFlag && !inProcessFlag
-				&& (utilityController->GetRawButton(PID_TEST_3)
-						|| utilityController->GetRawButton(PID_TEST_4))) {
-
-			inProcessFlag = true;
-			pidButtonTurnFlag = false;
-
-			Movement* mov = new Movement(false, 100.0, leftPID, rightPID);
-			mov->DoMovement();
-
-			pidButtonMoveFlag = true;
-			inProcessFlag = false;
-
-		} else if (!inProcessFlag
-				&& (!(utilityController->GetRawButton(PID_TEST_3)
-						|| utilityController->GetRawButton(PID_TEST_4)))) {
-			pidButtonMoveFlag = true;
-		}
-
-		// PID Turn TO Test
-		if (pidButtonTurnFlag && !inProcessFlag
-				&& (utilityController->GetRawButton(PID_TEST_2)
-						|| utilityController->GetRawButton(PID_TEST_1))) {
-
-			inProcessFlag = true;
-			pidButtonTurnFlag = false;
-
-			Movement* mov = new Movement(true, 90.0, leftPID, rightPID);
-			mov->DoMovement();
-
-			pidButtonTurnFlag = true;
-			inProcessFlag = false;
-
-		} else if (!inProcessFlag
-				&& (!(utilityController->GetRawButton(PID_TEST_2)
-						|| utilityController->GetRawButton(PID_TEST_1)))) {
-			pidButtonTurnFlag = true;
-		}
+//		if (pidButtonMoveFlag && !inProcessFlag
+//				&& (utilityController->GetRawButton(PID_TEST_3)
+//						|| utilityController->GetRawButton(PID_TEST_4))) {
+//
+//			inProcessFlag = true;
+//			pidButtonTurnFlag = false;
+//
+//			Movement* mov = new Movement(false, 100.0, leftPID, rightPID);
+//			mov->DoMovement();
+//
+//			pidButtonMoveFlag = true;
+//			inProcessFlag = false;
+//
+//		} else if (!inProcessFlag
+//				&& (!(utilityController->GetRawButton(PID_TEST_3)
+//						|| utilityController->GetRawButton(PID_TEST_4)))) {
+//			pidButtonMoveFlag = true;
+//		}
+//
+//		// PID Turn TO Test
+//		if (pidButtonTurnFlag && !inProcessFlag
+//				&& (utilityController->GetRawButton(PID_TEST_2)
+//						|| utilityController->GetRawButton(PID_TEST_1))) {
+//
+//			inProcessFlag = true;
+//			pidButtonTurnFlag = false;
+//
+//			Movement* mov = new Movement(true, 90.0, leftPID, rightPID);
+//			mov->DoMovement();
+//
+//			pidButtonTurnFlag = true;
+//			inProcessFlag = false;
+//
+//		} else if (!inProcessFlag
+//				&& (!(utilityController->GetRawButton(PID_TEST_2)
+//						|| utilityController->GetRawButton(PID_TEST_1)))) {
+//			pidButtonTurnFlag = true;
+//		}
 
 		cout << "Right error: " << rightPID->GetError() << "  Left error: "
 				<< leftPID->GetError() << endl;
@@ -343,12 +344,9 @@ public:
 				<< middleSwitch->Get() << endl;
 	}
 
-	void DisabledContinuous(void) {
-	}
-	void AutonomousContinuous(void) {
-	}
-	void TeleopContinuous(void) {
-	}
+	void DisabledContinuous(void) {}
+	void AutonomousContinuous(void) {}
+	void TeleopContinuous(void) {}
 };
 
 START_ROBOT_CLASS(RobotDemo)
