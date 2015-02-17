@@ -56,6 +56,7 @@ float elevatorCoefficient;
 // Autonomous instructions
 vector<Movement> instructions;
 int currentInstruction = 0;
+//Movement Alpha;
 
 class RobotDemo: public IterativeRobot {
 	// Drive system motor controllers
@@ -88,10 +89,10 @@ class RobotDemo: public IterativeRobot {
 	RobotDrive *robotDrive;
 
 	// PID Controllers
-	PIDController *rightPID;
-	PIDController *leftPID;
+//	PIDController *rightPID;
+//	PIDController *leftPID;
 
-	// Solenoids
+// Solenoids
 	DoubleSolenoid *leftGrabberSolenoid;
 	DoubleSolenoid *rightGrabberSolenoid;
 
@@ -114,13 +115,14 @@ public:
 		robotDrive = new RobotDrive(rightTalon, leftTalon);
 
 		bottomSwitch = new DigitalInput(6);
-		middleSwitch = new DigitalInput(7);
+		middleSwitch = new DigitalInput(7); //must find the value if used later
 		topSwitch = new DigitalInput(8);
 
 		leftEncoder = new Encoder(0, 1, true, Encoder::EncodingType::k4X);
 		rightEncoder = new Encoder(2, 3, true, Encoder::EncodingType::k4X);
 		elevatorEncoder = new Encoder(4, 5, true, Encoder::EncodingType::k4X);
 
+		//Something is probably broken here since it still inherits from the PIDGet method in PID Source
 		leftDistance = new DistanceEncoder(leftEncoder);
 		rightDistance = new DistanceEncoder(rightEncoder);
 
@@ -128,13 +130,18 @@ public:
 		rightController = new Joystick(1); // Logitech Attack 3
 		utilityController = new Joystick(2); // Logitech Gamepad
 
-		leftPID = new PIDController(0.0085, 0.0, 0.006, leftDistance,
-				leftTalon);
-		rightPID = new PIDController(0.0085, 0.0, 0.006, rightDistance,
-				rightTalon);
+		//UNUSED
+//		leftPID = new PIDController(0.0085, 0.0, 0.006, leftDistance,
+//				leftTalon);
+//		rightPID = new PIDController(0.0085, 0.0, 0.006, rightDistance,
+//				rightTalon);
 
 		leftGrabberSolenoid = new DoubleSolenoid(0, 1);
 		rightGrabberSolenoid = new DoubleSolenoid(2, 3);
+
+		//Auto Init
+		//Alpha = new Movement(false, 400, leftTalon, rightTalon, leftDistance,
+			//	rightDistance);
 	}
 
 	/********************************** Extra methods *************************************/
@@ -144,17 +151,26 @@ public:
 		return (angle * RADIUS_TURN * (PI / 180));
 	}
 
+	//UNUSED? I THINK?
+//	void SetSetpoint(bool turn, float value) {
+//		if (turn) {
+//			float turnValue = AngleToSetpoint(value);
+//			rightPID->SetSetpoint(turnValue);
+//			leftPID->SetSetpoint(turnValue);
+//		} else {
+//			rightPID->SetSetpoint(value);
+//			leftPID->SetSetpoint(-value);
+//		}
+//	}
+
 	/********************************** Init Routines *************************************/
 
 	void RobotInit(void) {
+		rightEncoder->SetDistancePerPulse(PI * 6 / 360.0);
+		leftEncoder->SetDistancePerPulse(PI * 6 / 360.0);
 	}
 
 	void DisabledInit(void) {
-		rightPID->Reset();
-		leftPID->Reset();
-
-		rightPID->Disable();
-		leftPID->Disable();
 
 		elevator1->SetSpeed(0.0);
 		elevator2->SetSpeed(0.0);
@@ -163,23 +179,13 @@ public:
 	}
 
 	void AutonomousInit(void) {
+		rightTalon->SetSpeed(0.25);
+		leftTalon->SetSpeed(0.25);
 
-		cout << "PID Enabled party?" << endl;
-
-		leftTalon->SetSafetyEnabled(false);
-		rightTalon->SetSafetyEnabled(false);
-
-		instructions.push_back(Movement(false, 400.0, leftPID, rightPID));
-//		instructions.push_back(Movement(true, 90.0, leftPID, rightPID));
-//		instructions.push_back(Movement(false, 40.0, leftPID, rightPID));
-//		instructions.push_back(Movement(true, 90.0, leftPID, rightPID));
-
-		cout << "Added Commands" << endl;
+		//Imagine Distance Stuff Being added
 	}
 
 	void TeleopInit(void) {
-		rightPID->Disable();
-		leftPID->Disable();
 
 		// Set all motor controllers to be not moving initially.
 		elevator1->SetSpeed(0.0);
@@ -190,28 +196,34 @@ public:
 
 	/********************************** Periodic Routines *************************************/
 
-	void DisabledPeriodic(void) {}
+	void DisabledPeriodic(void) {
+	}
 
 	void AutonomousPeriodic(void) {
-		cout << "Right error: " << rightPID->GetError() << "  Left error: " << leftPID->GetError() << endl;
-		if (!instructions[currentInstruction].IsRunning()) {
-			instructions[currentInstruction].DoMovement();
-			cout << "Starting movement #" << currentInstruction << endl;
+		cout << "Left Distance: " << leftDistance->Get() << endl;
+		cout << "Right Distance: " << rightDistance->Get() << endl;
+
+		if (leftDistance->Get() > 2000 && rightDistance->Get() > 2000) {
+			leftTalon->SetSpeed(0.0);
+			rightTalon->SetSpeed(0.0);
 		}
-//		} else if (instructions[currentInstruction].IsComplete()) {
-//			cout << "Instruction "<< currentInstruction << " Complete" << endl;
-//			currentInstruction++;
-//		} else if (instructions.size() <= ((unsigned int) currentInstruction)) {
-//			rightPID->Disable();
-//			leftPID->Disable();
+
+		//Movement Object
+
+//		int k = 1;
+//		if (k == 1) {
+//			k++;
+//			Alpha.DoMovement();
+//			while (!(Alpha.IsRunning())) {
+//				cout<< "PARTY!!!" << endl;
+//			}
+//		}else{
 //
-//			cout << "Autonomous finished!" << endl;
-//		} else {
-//			cout << instructions[currentInstruction].GetError() << endl;
-//			cout << currentInstruction << endl;
 //		}
-		cout << "Doing " << currentInstruction << " Inprocess: " << instructions[currentInstruction].IsComplete() << endl;
+
 	}
+	//limit switches
+	bool top = topSwitch->Get();
 
 	void TeleopPeriodic(void) {
 		// Initial Stuff
@@ -225,6 +237,8 @@ public:
 		} else if (utilityController->GetRawButton(ELEVATOR_UP)) {
 			elevatorInUse = true;
 			elevatorUp = true;
+		} else if (top) {
+			elevatorUp = false;
 		} else {
 			elevatorInUse = false;
 		}
@@ -298,55 +312,19 @@ public:
 
 		// Debugging Stuff and testing
 
-		// PID Move TO Test
-//		if (pidButtonMoveFlag && !inProcessFlag
-//				&& (utilityController->GetRawButton(PID_TEST_3)
-//						|| utilityController->GetRawButton(PID_TEST_4))) {
-//
-//			inProcessFlag = true;
-//			pidButtonTurnFlag = false;
-//
-//			Movement* mov = new Movement(false, 100.0, leftPID, rightPID);
-//			mov->DoMovement();
-//
-//			pidButtonMoveFlag = true;
-//			inProcessFlag = false;
-//
-//		} else if (!inProcessFlag
-//				&& (!(utilityController->GetRawButton(PID_TEST_3)
-//						|| utilityController->GetRawButton(PID_TEST_4)))) {
-//			pidButtonMoveFlag = true;
-//		}
-//
-//		// PID Turn TO Test
-//		if (pidButtonTurnFlag && !inProcessFlag
-//				&& (utilityController->GetRawButton(PID_TEST_2)
-//						|| utilityController->GetRawButton(PID_TEST_1))) {
-//
-//			inProcessFlag = true;
-//			pidButtonTurnFlag = false;
-//
-//			Movement* mov = new Movement(true, 90.0, leftPID, rightPID);
-//			mov->DoMovement();
-//
-//			pidButtonTurnFlag = true;
-//			inProcessFlag = false;
-//
-//		} else if (!inProcessFlag
-//				&& (!(utilityController->GetRawButton(PID_TEST_2)
-//						|| utilityController->GetRawButton(PID_TEST_1)))) {
-//			pidButtonTurnFlag = true;
-//		}
+		cout << "Right error: " << rightDistance->Get() << "  Left error: "
+				<< leftDistance->Get() << endl;
+		//cout << "BottomSwitch: " << bottomSwitch->Get() << " MiddleSwitch: "
+		//	<< middleSwitch->Get() << "TopSwitch: "<< topSwitch->Get()<< endl;
 
-		cout << "Right error: " << rightPID->GetError() << "  Left error: "
-				<< leftPID->GetError() << endl;
-		cout << "BottomSwitch: " << bottomSwitch->Get() << " MiddleSwitch: "
-				<< middleSwitch->Get() << endl;
 	}
 
-	void DisabledContinuous(void) {}
-	void AutonomousContinuous(void) {}
-	void TeleopContinuous(void) {}
+	void DisabledContinuous(void) {
+	}
+	void AutonomousContinuous(void) {
+	}
+	void TeleopContinuous(void) {
+	}
 };
 
 START_ROBOT_CLASS(RobotDemo)

@@ -15,6 +15,9 @@ public:
   double PIDGet() {
 	return m_baseEncoder->GetDistance();
   }
+  double Get() {
+  	return m_baseEncoder->GetDistance();
+    }
 };
 
 #endif
