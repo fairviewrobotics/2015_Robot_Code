@@ -19,7 +19,6 @@ class Movement {
 		DistanceEncoder*	m_leftDistance;
 		DistanceEncoder*	m_rightDistance;
 
-
 		void DriveTo(void);
 		void AngleTo(void);
 		float AngleToSetpoint(float angle);
@@ -48,7 +47,7 @@ Movement::Movement(bool turn, float distOrAngle, Talon* leftTalon, Talon* rightT
 }
 
 bool Movement::IsComplete(void) {
-	m_finished = (ABS(m_rightDistance->Get() - m_rightTo)<5) && (ABS(m_leftDistance->Get() - m_leftTo)<5);
+	m_finished = (ABS(m_rightDistance->Get() - m_rightTo) < 5) && (ABS(m_leftDistance->Get() - m_leftTo) < 5);
 	if (m_finished) {
 		m_isOperating = false;
 		m_rightTalon->SetSpeed(0.0);

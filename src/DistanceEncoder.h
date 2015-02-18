@@ -1,7 +1,7 @@
 #ifndef SRC_DISTANCEENCODER_H_
 #define SRC_DISTANCEENCODER_H_
 
-class DistanceEncoder: public PIDSource {
+class DistanceEncoder {
 private:
   Encoder* m_baseEncoder;
 
@@ -12,12 +12,9 @@ public:
 
   virtual ~DistanceEncoder() {}
 
-  double PIDGet() {
-	return m_baseEncoder->GetDistance();
-  }
   double Get() {
   	return m_baseEncoder->GetDistance();
-    }
+  }
 };
 
 #endif
