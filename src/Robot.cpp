@@ -1,17 +1,13 @@
 #include "WPILib.h"
-#include <Encoder.h>
 #include <Counter.h>
 #include "Commands/Command.h"
 #include <string>
 #include <iostream>
 #include <TrcDefs.h>
-#include <PIDController.h>
-#include <DistanceEncoder.h>
 #include <RobotDriveOutput.h>
-#include <Movement.h>
 
 #define  __PRINT_COMMAND_H__
-#define DRIVE_ENCODER_PPR 	2048
+//#define DRIVE_ENCODER_PPR 	2048
 
 // Joystick Mapping
 #define NOODLER_IN				1
@@ -25,12 +21,15 @@
 #define PID_TEST_1				9
 #define PID_TEST_2				10
 
-#define JOYSTICK_DEAD_PERCENTAGE 0.1
-#define PID_TEST_TURN_VALUE		 90
+#define AUTO_SPEED1 0.5
+#define AUTO_SPEED2 0.3
 
-// Other Constants
-#define TURN_RADIUS				11.75
-#define WHEEL_RADIUS			6
+#define AUTO_STAGE1 1.0
+#define AUTO_STAGE2 3.4
+
+
+
+#define JOYSTICK_DEAD_PERCENTAGE 0.1
 
 using namespace std;
 
@@ -40,19 +39,9 @@ bool elevatorUp = true;
 bool noodlerInUse = false;
 bool noodlerIn = false;
 
-// Flags
-bool inProcessFlag = false;
-bool pidButtonTurnFlag = true;
-bool pidButtonMoveFlag = true;
-
 // Speed coefficients for the drive train and elevator control
 float driveCoefficient = 0;
 float elevatorCoefficient = 0;
-
-// Autonomous instructions
-vector<Movement> instructions;
-int currentInstruction = 0;
-//Movement Alpha;
 
 class RobotDemo: public IterativeRobot {
 	// Drive system motor controllers
@@ -65,17 +54,10 @@ class RobotDemo: public IterativeRobot {
 	Victor *rightGrabber;
 //	Victor *noodler;
 
-	// Encoders
-	Encoder *rightEncoder;
-	Encoder *leftEncoder;
-	Encoder *elevatorEncoder;
-	DistanceEncoder *rightDistance;
-	DistanceEncoder *leftDistance;
-
 	//Limit Switches
-	DigitalInput *bottomSwitch;
-	DigitalInput *middleSwitch;
-	DigitalInput *topSwitch;
+//	DigitalInput *bottomSwitch;
+//	DigitalInput *middleSwitch;
+//	DigitalInput *topSwitch;
 
 	// Joysticks
 	Joystick *leftController;
@@ -84,9 +66,7 @@ class RobotDemo: public IterativeRobot {
 
 	RobotDrive *robotDrive;
 
-	// PID Controllers
-//	PIDController *rightPID;
-//	PIDController *leftPID;
+	Timer *autonomousTimer;
 
 	// Solenoids
 	DoubleSolenoid *leftGrabberSolenoid;
@@ -106,45 +86,23 @@ public:
 
 		robotDrive = new RobotDrive(rightTalon, leftTalon);
 
-		bottomSwitch = new DigitalInput(6);
-		middleSwitch = new DigitalInput(7); //must find the value if used later
-		topSwitch = new DigitalInput(8);
+//		bottomSwitch = new DigitalInput(6);
+//		middleSwitch = new DigitalInput(7); //must find the value if used later
+//		topSwitch = new DigitalInput(8);
 
-		leftEncoder = new Encoder(0, 1, true, Encoder::EncodingType::k4X);
-		rightEncoder = new Encoder(2, 3, true, Encoder::EncodingType::k4X);
-		elevatorEncoder = new Encoder(4, 5, true, Encoder::EncodingType::k4X);
-
-		leftDistance = new DistanceEncoder(leftEncoder);
-		rightDistance = new DistanceEncoder(rightEncoder);
+		autonomousTimer = new Timer();
 
 		leftController = new Joystick(0); // Logitech Attack 3
 		rightController = new Joystick(1); // Logitech Attack 3
 		utilityController = new Joystick(2); // Logitech Gamepad
 
-//		UNUSED
-//		leftPID =  new PIDController(0.0085, 0.0, 0.006, leftDistance, leftTalon);
-//		rightPID = new PIDController(0.0085, 0.0, 0.006, rightDistance, rightTalon);
-
 		leftGrabberSolenoid = new DoubleSolenoid(0, 1);
 		rightGrabberSolenoid = new DoubleSolenoid(2, 3);
-
-		//Auto Init
-		// Alpha = new Movement(false, 400, leftTalon, rightTalon, leftDistance, rightDistance);
-	}
-
-	/********************************** Extra methods *************************************/
-
-	// From an angle to a point which both must drive to
-	float AngleToSetpoint(float angle) {
-		return (angle * TURN_RADIUS * (PI / 180));
 	}
 
 	/********************************** Init Routines *************************************/
 
-	void RobotInit(void) {
-		rightEncoder->SetDistancePerPulse(PI * WHEEL_RADIUS / 360.0);
-		leftEncoder->SetDistancePerPulse(PI * WHEEL_RADIUS / 360.0);
-	}
+	void RobotInit(void) {}
 
 	void DisabledInit(void) {
 		elevator1->SetSpeed(0.0);
@@ -154,18 +112,19 @@ public:
 	}
 
 	void AutonomousInit(void) {
-		rightTalon->SetSpeed(0.25);
-		leftTalon->SetSpeed(0.25);
+		rightTalon->SetSpeed(0.0);
+		leftTalon->SetSpeed(0.0);
 
-		// instructions.push_back(Movement(false, 400, leftTalon, rightTalon, leftDistance, rightDistance));
+		autonomousTimer->Start();
+		autonomousTimer->Reset();
 	}
 
 	void TeleopInit(void) {
 		// Set all motor controllers to be not moving initially.
-		elevator1->SetSpeed(0.0);
-		elevator2->SetSpeed(0.0);
-		leftTalon->SetSpeed(0.0);
-		rightTalon->SetSpeed(0.0);
+		//elevator1->SetSpeed(0.0);
+		//elevator2->SetSpeed(0.0);
+		//leftTalon->SetSpeed(0.0);
+		//rightTalon->SetSpeed(0.0);
 	}
 
 	/********************************** Periodic Routines *************************************/
@@ -173,40 +132,20 @@ public:
 	void DisabledPeriodic(void) {}
 
 	void AutonomousPeriodic(void) {
-		cout << "Left Distance: " << leftDistance->Get() << endl;
-		cout << "Right Distance: " << rightDistance->Get() << endl;
+//		cout << "Timer: " << autonomousTimer->Get() << endl;
 
-		if (leftDistance->Get() > 2000 && rightDistance->Get() > 2000) {
+		if (autonomousTimer->Get() < AUTO_STAGE1) {
+			leftTalon->SetSpeed(AUTO_SPEED1);
+			rightTalon->SetSpeed(-0.9*AUTO_SPEED1);
+		} else if (autonomousTimer->Get() < AUTO_STAGE2) {
+			leftTalon->SetSpeed(AUTO_SPEED2);
+			rightTalon->SetSpeed(-0.9*AUTO_SPEED2);
+			//leftTalon->SetSpeed((AUTO_SPEED - (autonomousTimer->Get()-AUTO_STAGE1)));
+			//rightTalon->SetSpeed((-AUTO_SPEED + (autonomousTimer->Get()-AUTO_STAGE1)));
+		} else {
 			leftTalon->SetSpeed(0.0);
 			rightTalon->SetSpeed(0.0);
 		}
-
-//		if (!instructions[currentInstruction].IsRunning()) {
-//			instructions[currentInstruction].DoMovement();
-//			cout << "Starting movement #" << currentInstruction << endl;
-//		} else if (instructions[currentInstruction].IsComplete()) {
-//			cout << "Instruction "<< currentInstruction << " Complete" << endl;
-//			currentInstruction++;
-//		} else if (instructions.size() <= ((unsigned int) currentInstruction)) {
-//			cout << "Autonomous finished!" << endl;
-//		} else {
-//			cout << instructions[currentInstruction].GetError() << endl;
-//			cout << currentInstruction << endl;
-//		}
-//		cout << "Doing " << currentInstruction << " Inprocess: " << instructions[currentInstruction].IsComplete() << endl;
-
-
-		// Single Object Example
-//		int k = 1;
-//		if (k == 1) {
-//			k++;
-//			Alpha.DoMovement();
-//			while (!(Alpha.IsRunning())) {
-//				cout<< "PARTY!!!" << endl;
-//			}
-//		} else {
-//
-//		}
 	}
 
 	void TeleopPeriodic(void) {
@@ -221,9 +160,6 @@ public:
 		} else if (utilityController->GetRawButton(ELEVATOR_UP)) {
 			elevatorInUse = true;
 			elevatorUp = true;
-		} else if (topSwitch->Get()) {
-			elevatorUp = false;
-			elevatorInUse=false;
 		} else {
 			elevatorInUse = false;
 		}
@@ -295,9 +231,8 @@ public:
 //			noodler->SetSpeed(0);
 //		}
 
-		// ===== Debugging Stuff and testing =====
-		cout << "Right error: " << rightDistance->Get() << "  Left error: " << leftDistance->Get() << endl;
-		//cout << "BottomSwitch: " << bottomSwitch->Get() << " MiddleSwitch: "
+		// ===== Debugging Stuff and Testing =====
+		// cout << "BottomSwitch: " << bottomSwitch->Get() << " MiddleSwitch: "
 		//	<< middleSwitch->Get() << "TopSwitch: "<< topSwitch->Get()<< endl;
 	}
 
@@ -307,22 +242,3 @@ public:
 };
 
 START_ROBOT_CLASS(RobotDemo)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Nosey little shit
