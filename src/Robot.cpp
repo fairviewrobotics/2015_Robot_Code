@@ -27,8 +27,6 @@
 #define AUTO_STAGE1 1.0
 #define AUTO_STAGE2 3.4
 
-
-
 #define JOYSTICK_DEAD_PERCENTAGE 0.1
 
 using namespace std;
@@ -43,6 +41,9 @@ bool noodlerIn = false;
 float driveCoefficient = 0;
 float elevatorCoefficient = 0;
 
+// Autonomous selection
+int autonomousSelection;
+
 class RobotDemo: public IterativeRobot {
 	// Drive system motor controllers
 	Talon *rightTalon;
@@ -54,12 +55,12 @@ class RobotDemo: public IterativeRobot {
 	Victor *rightGrabber;
 //	Victor *noodler;
 
-	//Limit Switches
+//Limit Switches
 //	DigitalInput *bottomSwitch;
 //	DigitalInput *middleSwitch;
 //	DigitalInput *topSwitch;
 
-	// Joysticks
+// Joysticks
 	Joystick *leftController;
 	Joystick *rightController;
 	Joystick *utilityController;
@@ -67,6 +68,8 @@ class RobotDemo: public IterativeRobot {
 	RobotDrive *robotDrive;
 
 	Timer *autonomousTimer;
+
+	Preferences *prefs;
 
 	// Solenoids
 	DoubleSolenoid *leftGrabberSolenoid;
@@ -91,6 +94,8 @@ public:
 //		topSwitch = new DigitalInput(8);
 
 		autonomousTimer = new Timer();
+
+		prefs = Preferences::GetInstance();
 
 		leftController = new Joystick(0); // Logitech Attack 3
 		rightController = new Joystick(1); // Logitech Attack 3
@@ -117,6 +122,8 @@ public:
 
 		autonomousTimer->Start();
 		autonomousTimer->Reset();
+
+		autonomousSelection = prefs->GetInt("AutonomousSelection", 0);
 	}
 
 	void TeleopInit(void) {
@@ -132,20 +139,123 @@ public:
 	void DisabledPeriodic(void) {}
 
 	void AutonomousPeriodic(void) {
-//		cout << "Timer: " << autonomousTimer->Get() << endl;
+		double time = autonomousTimer->Get();
 
-		if (autonomousTimer->Get() < AUTO_STAGE1) {
-			leftTalon->SetSpeed(AUTO_SPEED1);
-			rightTalon->SetSpeed(-0.9*AUTO_SPEED1);
-		} else if (autonomousTimer->Get() < AUTO_STAGE2) {
-			leftTalon->SetSpeed(AUTO_SPEED2);
-			rightTalon->SetSpeed(-0.9*AUTO_SPEED2);
-			//leftTalon->SetSpeed((AUTO_SPEED - (autonomousTimer->Get()-AUTO_STAGE1)));
-			//rightTalon->SetSpeed((-AUTO_SPEED + (autonomousTimer->Get()-AUTO_STAGE1)));
-		} else {
-			leftTalon->SetSpeed(0.0);
-			rightTalon->SetSpeed(0.0);
+		// Selection 1: Robot going over the bump.
+		if (autonomousSelection == 1) {
+			//Forward Auto stage 1
+			if (time < 1.0) {
+
+				rightGrabberSolenoid->Set(DoubleSolenoid::kForward);
+				leftGrabberSolenoid->Set(DoubleSolenoid::kForward);
+
+				leftTalon->SetSpeed(0.4);
+				rightTalon->SetSpeed(-0.4);
+
+			//Open Soleinoids and slow down
+			} else if (time < 3.0) {
+				leftTalon->SetSpeed(0.0);
+				rightTalon->SetSpeed(-0.0);
+
+			//Stop, start grabbers, and close Solenoids
+			} else if (time < 6.0) {
+				leftTalon->SetSpeed(0.0);
+				rightTalon->SetSpeed(0.0);
+
+				rightGrabberSolenoid->Set(DoubleSolenoid::kReverse);
+				leftGrabberSolenoid->Set(DoubleSolenoid::kReverse);
+
+				leftGrabber->SetSpeed(-.8);
+				rightGrabber->SetSpeed(-.8);
+
+			//Start going backwards
+			} else if (time < 9.4) {
+				leftTalon->SetSpeed(-0.4);
+				rightTalon->SetSpeed(0.4);
+
+				leftGrabber->SetSpeed(-.8);
+				rightGrabber->SetSpeed(-.8);
+
+			//Complete Stop
+			} else {
+				leftGrabber->SetSpeed(0.0);
+				rightGrabber->SetSpeed(0.0);
+
+				rightGrabberSolenoid->Set(DoubleSolenoid::kOff);
+				leftGrabberSolenoid->Set(DoubleSolenoid::kOff);
+
+				leftTalon->SetSpeed(0.0);
+				rightTalon->SetSpeed(0.0);
+			}
+
+		// Selection 2: Not over the bump
+		} else if (autonomousSelection == 2) {
+			//Forward Auto stage 1
+			if (time < 1.0) {
+
+				rightGrabberSolenoid->Set(DoubleSolenoid::kForward);
+				leftGrabberSolenoid->Set(DoubleSolenoid::kForward);
+
+				leftTalon->SetSpeed(0.4);
+				rightTalon->SetSpeed(-0.4);
+
+			//Open Soleinoids and slow down
+			} else if (time < 3.0) {
+				leftTalon->SetSpeed(0.0);
+				rightTalon->SetSpeed(-0.0);
+
+			//Stop, start grabbers, and close Solenoids
+			} else if (time < 6.0) {
+				leftTalon->SetSpeed(0.0);
+				rightTalon->SetSpeed(0.0);
+
+				rightGrabberSolenoid->Set(DoubleSolenoid::kReverse);
+				leftGrabberSolenoid->Set(DoubleSolenoid::kReverse);
+
+				leftGrabber->SetSpeed(-.8);
+				rightGrabber->SetSpeed(-.8);
+
+			//Start going backwards
+			} else if (time < 9.1) {
+				leftTalon->SetSpeed(-0.4);
+				rightTalon->SetSpeed(0.4);
+
+				leftGrabber->SetSpeed(-.8);
+				rightGrabber->SetSpeed(-.8);
+
+			//Complete Stop
+			} else {
+				leftGrabber->SetSpeed(0.0);
+				rightGrabber->SetSpeed(0.0);
+
+				rightGrabberSolenoid->Set(DoubleSolenoid::kOff);
+				leftGrabberSolenoid->Set(DoubleSolenoid::kOff);
+
+				leftTalon->SetSpeed(0.0);
+				rightTalon->SetSpeed(0.0);
+			}
+		} else if (autonomousSelection == 3) {
+			if (time < 3.0) {
+				leftTalon->SetSpeed(-0.4);
+				rightTalon->SetSpeed(0.4);
+			}
 		}
+
+		//
+		// Autonomous Move forward only
+		//
+//		if (autonomousTimer->Get() < AUTO_STAGE1) {
+//			leftTalon->SetSpeed(AUTO_SPEED1);
+//			rightTalon->SetSpeed(-0.9*AUTO_SPEED1);
+//		} else if (autonomousTimer->Get() < AUTO_STAGE2) {
+//			leftTalon->SetSpeed(AUTO_SPEED2);
+//			rightTalon->SetSpeed(-0.9*AUTO_SPEED2);
+//			//leftTalon->SetSpeed((AUTO_SPEED - (autonomousTimer->Get()-AUTO_STAGE1)));
+//			//rightTalon->SetSpeed((-AUTO_SPEED + (autonomousTimer->Get()-AUTO_STAGE1)));
+//		} else {
+//			leftTalon->SetSpeed(0.0);
+//			rightTalon->SetSpeed(0.0);
+//		}
 	}
 
 	void TeleopPeriodic(void) {
@@ -236,9 +346,12 @@ public:
 		//	<< middleSwitch->Get() << "TopSwitch: "<< topSwitch->Get()<< endl;
 	}
 
-	void DisabledContinuous(void) {}
-	void AutonomousContinuous(void) {}
-	void TeleopContinuous(void) {}
+	void DisabledContinuous(void) {
+	}
+	void AutonomousContinuous(void) {
+	}
+	void TeleopContinuous(void) {
+	}
 };
 
 START_ROBOT_CLASS(RobotDemo)
